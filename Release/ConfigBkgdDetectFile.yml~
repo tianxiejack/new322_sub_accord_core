@@ -1,0 +1,6 @@
+%YAML:1.0
+cfg_mode: 3
+cfg_threshold: 0.2
+cfg_alpha: 1.0
+
+
