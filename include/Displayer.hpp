@@ -7,7 +7,6 @@
 
 #include <cuda.h>
 #include "cuda_runtime_api.h"
-
 #include "osa.h"
 #include "osa_thr.h"
 #include "osa_buf.h"
@@ -73,7 +72,8 @@ typedef struct _ds_init_param{
 	void (*timerfunc)(int value);
 	void (*idlefunc)(void);
 	void (*closefunc)(void);
-	void (*renderfunc)(void);
+	void (*renderfunc)(int stepIdx, int stepSub, int context);
+	void (*initfunc)(void);
 	int timerfunc_value;//context
 }DS_InitPrm;
 
@@ -104,6 +104,14 @@ public:
 		DS_CFG_Max
 	}DS_CFG;
 
+	enum{
+		RUN_ENTER = 0,
+		RUN_DC,
+		RUN_WIN,
+		RUN_SWAP,
+		RUN_LEAVE
+	};
+
 	int dynamic_config(DS_CFG type, int iPrm, void* pPrm);
 	int get_videoSize(int chId, DS_Size &size);
 	GLuint async_display(int chId, int width, int height, int channels);
@@ -115,7 +123,8 @@ public:
 	bool m_bFullScreen;
 	bool m_bOsd;
 	Mat m_imgOsd[DS_DC_CNT];
-	CvScalar m_osdColor;
+	cv::Scalar m_osdColor;
+	//int m_thickness;
 	DS_Size m_videoSize[DS_CHAN_MAX];
 	GLuint buffId_input[DS_CHAN_MAX];
 	GLuint buffId_osd[DS_DC_CNT];
@@ -164,6 +173,7 @@ protected:
 	bool gltLoadShaderFile(const char *szFile, GLuint shader);
 	GLuint gltLoadShaderPairWithAttributes(const char *szVertexProg, const char *szFragmentProg, ...);
 
+	void UpdateOSD(void);
 
 private:
 	OSA_MutexHndl m_mutex;

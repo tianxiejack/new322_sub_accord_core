@@ -9,12 +9,12 @@
 #define CRCORE_HPP_
 
 /***********************************************
- * core version 1.0.3
+ * core version 1.0.4
  */
 #include "osa.h"
 #include "osa_sem.h"
 
-#define CORE_1001_VERSION_  "1.0.3"
+#define CORE_1001_VERSION_  "1.0.4"
 #define COREID_1001			(0x10010000)
 #define COREID_1001_040		(CORNID_1001 + 1)
 
@@ -89,8 +89,8 @@ public:
 	virtual int enableEnh(bool enable) = 0;
 	virtual int enableEnh(int chId, bool enable) = 0;
 	virtual int enableBlob(bool enable) = 0;
-	virtual int bindBlend(int blendchId, cv::Matx44f matric) = 0;
-	virtual int bindBlend(int chId, int blendchId, cv::Matx44f matric) = 0;
+	virtual int bindBlend(int blendchId, const cv::Matx44f& matric) = 0;
+	virtual int bindBlend(int chId, int blendchId, const cv::Matx44f& matric) = 0;
 	virtual int enableOSD(bool enable) = 0;
 	virtual int enableEncoder(int chId, bool enable) = 0;
 	virtual int setAxisPos(cv::Point pos) = 0;
@@ -99,6 +99,8 @@ public:
 	virtual int setTrackCoast(int nFrames) = 0;
 	virtual int setEZoomx(int value) = 0;
 	virtual int setEZoomx(int chId, int value) = 0;
+	virtual int setWinPos(int winId, const cv::Rect& rc) = 0;
+	virtual int setWinMatric(int winId, const cv::Matx44f& matric) = 0;//! (0,0):(left,bottom)
 	virtual int setOSDColor(int yuv, int thickness = 2) = 0;
 	virtual int setOSD(cv::Scalar color, int thickness = 2) = 0;
 	virtual int setEncTransLevel(int iLevel) = 0;

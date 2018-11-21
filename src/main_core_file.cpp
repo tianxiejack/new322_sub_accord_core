@@ -14,9 +14,8 @@
 #include <unistd.h>
 #include "main.h"
 #include "crCore.hpp"
-#include "crosd.hpp"
 #include "thread.h"
-#include "MultiChVideo.hpp"
+#include "osa_mutex.h"
 #include "cuda_convert.cuh"
 
 using namespace cv;
@@ -70,7 +69,7 @@ static double gfps_mean[2] = {0, 0};
 static int64 gfps_tmStart[2] = {0, 0};
 static unsigned long gfps_count[2] = {0, 0};
 
-static void processFrame_core(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
+static void processFrame_core_file(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
 {
 	if(capInfo.flags & V4L2_BUF_FLAG_ERROR){
 		OSA_printf("ch%d V4L2_BUF_FLAG_ERROR", cap_chid);
@@ -198,10 +197,10 @@ static void Axis_move(int dir, int step = 1)
 }
 
 static int iMenu = 0;
-static int chrChId = 0;
 static void keyboard_event(unsigned char key, int x, int y)
 {
 	static cv::Size winSize(80, 60);
+	static int chId = 0;
 	static int fovId[2] = {0,0};
 	static bool mmtdEnable = false;
 	static bool trkEnable = false;
@@ -229,8 +228,6 @@ static void keyboard_event(unsigned char key, int x, int y)
 			" [p] Change Pinp channel ID (0/1/null)  \n"
 			" [r] Bind/Unbind blend TV BY Flr        \n"
 			" [s] Enable/Disable Blob detect         \n"
-			" [v] Move sub window postion            \n"
-			" [w] EZoomx sub window video            \n"
 			" [1].[5] Enable Track By MMTD           \n"
 			" [esc][q]Quit                           \n"
 			"--> ",
@@ -252,22 +249,22 @@ static void keyboard_event(unsigned char key, int x, int y)
 	switch(key)
 	{
 	case 't':
-		if(chrChId == 0)
-			fovId[chrChId] = (fovId[chrChId]<4-1) ? (fovId[chrChId]+1) : 0;
-		chrChId = 0;
-		winSize.width *= SYS_CHN_WIDTH(chrChId)/1920;
-		winSize.height *= SYS_CHN_HEIGHT(chrChId)/1080;
-		core->setMainChId(chrChId, fovId[chrChId], 0, winSize);
+		if(chId == 0)
+			fovId[chId] = (fovId[chId]<4-1) ? (fovId[chId]+1) : 0;
+		chId = 0;
+		winSize.width *= SYS_CHN_WIDTH(chId)/1920;
+		winSize.height *= SYS_CHN_HEIGHT(chId)/1080;
+		core->setMainChId(chId, fovId[chId], 0, winSize);
 		break;
 	case 'f':
 		OSA_printf("%s %d: ...", __func__, __LINE__);
-		if(chrChId == 1)
-			fovId[chrChId] = (fovId[chrChId]<4-1) ? (fovId[chrChId]+1) : 0;
-		chrChId = 1;
-		winSize.width *= SYS_CHN_WIDTH(chrChId)/1920;
-		winSize.height *= SYS_CHN_HEIGHT(chrChId)/1080;
+		if(chId == 1)
+			fovId[chId] = (fovId[chId]<4-1) ? (fovId[chId]+1) : 0;
+		chId = 1;
+		winSize.width *= SYS_CHN_WIDTH(chId)/1920;
+		winSize.height *= SYS_CHN_HEIGHT(chId)/1080;
 		//OSA_printf("%s %d: ...", __func__, __LINE__);
-		core->setMainChId(chrChId, fovId[chrChId], 0, winSize);
+		core->setMainChId(chId, fovId[chId], 0, winSize);
 		OSA_printf("%s %d: ...leave\n", __func__, __LINE__);
 		break;
 	case 'u':
@@ -283,10 +280,10 @@ static void keyboard_event(unsigned char key, int x, int y)
 		core->enableTrack(trkEnable, winSize, true);
 		//Track_armRefine(KEYDIR_UP, 1);
 		break;
-	//case 'w':
-	//	winSize.width = 80; winSize.height = 60;
-	//	core->enableTrack(trkEnable, winSize, true);
-	//	break;
+	case 'w':
+		winSize.width = 80; winSize.height = 60;
+		core->enableTrack(trkEnable, winSize, true);
+		break;
 	case 'b':
 		mmtdEnable ^=1;
 		core->enableMMTD(mmtdEnable, 5);
@@ -297,13 +294,13 @@ static void keyboard_event(unsigned char key, int x, int y)
 		break;
 	case 'c':
 		static bool enhEnable[2] = {false, false};
-		enhEnable[chrChId] ^= 1;
-		core->enableEnh(enhEnable[chrChId]);
+		enhEnable[chId] ^= 1;
+		core->enableEnh(enhEnable[chId]);
 		break;
 	case 'd':
 		static int ezoomx[2] = {1, 1};
-		ezoomx[chrChId] = (ezoomx[chrChId] == 4) ? 1 : ezoomx[chrChId]<<1;
-		core->setEZoomx(ezoomx[chrChId]);
+		ezoomx[chId] = (ezoomx[chId] == 4) ? 1 : ezoomx[chId]<<1;
+		core->setEZoomx(ezoomx[chId]);
 		break;
 	case 'e':
 		static bool osdEnable = true;
@@ -315,7 +312,6 @@ static void keyboard_event(unsigned char key, int x, int y)
 		static int icolor = 0;
 		icolor = (icolor<sizeof(colorTab)/sizeof(int)-1) ? (icolor+1) : 0;
 		core->setOSDColor(colorTab[icolor]);
-		cr_osd::set(colorTab[icolor]);
 		break;
 	case 'h':
 		static bool coastEnable = false;
@@ -327,8 +323,8 @@ static void keyboard_event(unsigned char key, int x, int y)
 	case '3':
 	case '4':
 	case '5':
-		winSize.width *= SYS_CHN_WIDTH(chrChId)/1920;
-		winSize.height *= SYS_CHN_HEIGHT(chrChId)/1080;
+		winSize.width *= SYS_CHN_WIDTH(chId)/1920;
+		winSize.height *= SYS_CHN_HEIGHT(chId)/1080;
 		if(core->enableTrackByMMTD(key-'1', &winSize, false)==OSA_SOK){
 			trkEnable = true;
 			mmtdEnable = false;
@@ -365,8 +361,8 @@ static void keyboard_event(unsigned char key, int x, int y)
 		break;
 	case 'n':
 		static bool encEnable[2] = {true, true};
-		encEnable[chrChId] ^=1;
-		core->enableEncoder(chrChId, encEnable[chrChId]);
+		encEnable[chId] ^=1;
+		core->enableEncoder(chId, encEnable[chId]);
 		break;
 	case 's':
 		if(iMenu == 1)
@@ -406,43 +402,6 @@ static void keyboard_event(unsigned char key, int x, int y)
 	}
 		break;
 
-	case 'v':
-	{
-		static int posflag = -1;
-		posflag++;
-		posflag = (posflag >= 4) ? 0 : posflag;
-		cv::Rect rc;
-		int width = 1920, height = 1080;
-		switch(posflag)
-		{
-		case 1:
-			rc = cv::Rect(width*2/3, 0, width/3, height/3);
-			break;
-		case 2:
-			rc = cv::Rect(0, 0, width/3, height/3);
-			break;
-		case 3:
-			rc = cv::Rect(0, height*2/3, width/3, height/3);
-			break;
-		case 0:
-		default:
-			rc = cv::Rect(width*2/3, height*2/3, width/3, height/3);
-			break;
-		}
-		core->setWinPos(1, rc);
-	}
-		break;
-	case 'w':
-	{
-		static int ezoomxSub = 1;
-		ezoomxSub = (ezoomxSub == 8) ? 1 : ezoomxSub<<1;
-		cv::Matx44f matricScale;
-		matricScale = cv::Matx44f::eye();
-		matricScale.val[0] = ezoomxSub;
-		matricScale.val[5] = ezoomxSub;
-		core->setWinMatric(1, matricScale.t());
-	}
-		break;
 	case 'q':
 	case 27:
 		if(iMenu == 0)
@@ -499,62 +458,67 @@ static void *thrdhndl_keyevent(void *context)
 static void *thrdhndl_timer( void * p )
 {
 	struct timeval timeout;
-	wchar_t strTmp[64] = L"";
-	wchar_t strFov[2][64] = {L"",L""};
-	wchar_t strFPS[2][64] = {L"",L""};
+	char strTmp[64];
+	char strFov[2][16];
+	char strFPS[2][64];
 	cv::Point posTmp;
+	bool bHide = false;
 	CORE1001_STATS stats;
 
-	unsigned int tmpValue = 0;
-
-	cr_osd::put(strTmp, cv::Point(50,45), cvScalar(255,255,255,255));
-	cr_osd::put(strFov[0], cv::Point(50,45*2), cvScalar(255,255,255,255));
-	cr_osd::put(strFov[1], cv::Point(50,45*3), cvScalar(255,255,255,255));
-	cr_osd::put(strFPS[0], cv::Point(50,45*4), cvScalar(255,255,255,255));
-	cr_osd::put(strFPS[1], cv::Point(50,45*5), cvScalar(255,255,255,255));
-	cr_osd::put(&tmpValue, L"value = %d", cv::Point(50,45*6), cvScalar(255,255,255,255));
-	cr_osd::put(&chrChId, 2, cv::Point(50, 45*7), cvScalar(255, 0, 0, 255), L"嵌润信息科技 TV", L"自动视频跟踪 FLR");
-
-	cr_osd::Line line1;
-	line1.draw(cv::Point(50, 45*8), cv::Point(265, 45*8), cvScalar(255, 0,0,255), 2);
-
-	cr_osd::Polygon polygon1(3, GL_LINE_LOOP);
-	cr_osd::Polygon polygon2(3, GL_POLYGON);
-	std::vector<cv::Point> vpts;
-	vpts.clear();
-	vpts.push_back(cv::Point(300, 440));
-	vpts.push_back(cv::Point(320, 440));
-	vpts.push_back(cv::Point(310, 470));
-	polygon1.draw(vpts, cvScalar(0, 0, 255,255), 2);
-	vpts.clear();
-	vpts.push_back(cv::Point(310, 410));
-	vpts.push_back(cv::Point(300, 440));
-	vpts.push_back(cv::Point(320, 440));
-	polygon2.draw(vpts, cvScalar(255, 0, 0,255), 2);
-
-
+	VideoCapture cap;
+	//cap.open("mvDetect.h264");
+	cap.open("test_fr.h264");
+	assert(cap.isOpened());
 
 	while( *(bool*)p )
 	{
 		timeout.tv_sec = 0;
-		timeout.tv_usec = 100*1000;
+		timeout.tv_usec = 30*1000;
 		select( 0, NULL, NULL, NULL, &timeout );
+
+		Mat frame;
+		cap >> frame;
+		struct v4l2_buffer capInfo;
+		memset(&capInfo, 0, sizeof(capInfo));
+		processFrame_core_file(0, frame.data, capInfo, V4L2_PIX_FMT_BGR24);
+		//OSA_printf("%s: %d x %d", __func__, frame.cols, frame.rows);
+
+		//cvtColor(prev, prev_grey, COLOR_BGR2GRAY);
+		//imshow("file", frame);
+		//waitKey(1);
+
+
 		memcpy(&stats, &core->m_stats, sizeof(stats));
 		struct tm curTmt;
 		time_t curTm;
 		time(&curTm);
 		memcpy(&curTmt,localtime(&curTm),sizeof(curTmt));
-		swprintf(strTmp, 64, L"%04d-%02d-%02d %02d:%02d:%02d",
+		if(bHide){
+			putText(core->m_dc[0], strTmp, cv::Point(50,50), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(0),1);
+			putText(core->m_dc[1], strTmp, cv::Point(50,50), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(0),1);
+			putText(core->m_dc[0], strFov[0], cv::Point(50,50*2), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(0),1);
+			putText(core->m_dc[1], strFov[1], cv::Point(50,50*3), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(0),1);
+			putText(core->m_dc[0], strFPS[0], cv::Point(50,50*4), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(0),1);
+			putText(core->m_dc[1], strFPS[1], cv::Point(50,50*5), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(0),1);
+			//cv::circle(core->m_dc[0], posTmp, 16, cvScalar(0), 4);
+		}
+		sprintf(strTmp, "%04d-%02d-%02d %02d:%02d:%02d",
 				curTmt.tm_year+1900, curTmt.tm_mon+1, curTmt.tm_mday,
-				curTmt.tm_hour, curTmt.tm_min, curTmt.tm_sec);
-		swprintf(strFov[0], 64, L"ch0 FOV: %d", stats.chn[0].fovId);
-		swprintf(strFov[1], 64, L"ch1 FOV: %d", stats.chn[1].fovId);
-		swprintf(strFPS[0], 64, L"ch0 FPS: %.2f (%.2f %.2f)", gfps_mean[0],gfps_max[0],gfps_min[0]);
-		swprintf(strFPS[1], 64, L"ch1 FPS: %.2f (%.2f %.2f)", gfps_mean[1],gfps_max[1],gfps_min[1]);
+				curTmt.tm_hour, curTmt.tm_hour, curTmt.tm_sec);
+		sprintf(strFov[0], "ch0 FOV: %d", stats.chn[0].fovId);
+		sprintf(strFov[1], "ch1 FOV: %d", stats.chn[1].fovId);
+		sprintf(strFPS[0], "ch0 FPS: %.2f (%.2f %.2f)", gfps_mean[0],gfps_max[0],gfps_min[0]);
+		sprintf(strFPS[1], "ch1 FPS: %.2f (%.2f %.2f)", gfps_mean[1],gfps_max[1],gfps_min[1]);
+		putText(core->m_dc[0], strTmp, cv::Point(50,50), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(255),1);
+		putText(core->m_dc[1], strTmp, cv::Point(50,50), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(255),1);
+		putText(core->m_dc[0], strFov[0], cv::Point(50,50*2), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(255),1);
+		putText(core->m_dc[1], strFov[1], cv::Point(50,50*3), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(255),1);
+		putText(core->m_dc[0], strFPS[0], cv::Point(50,50*4), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(255),1);
+		putText(core->m_dc[1], strFPS[1], cv::Point(50,50*5), CV_FONT_HERSHEY_COMPLEX, 1.2,cvScalar(255),1);
 		//posTmp = cv::Point(stats.chn[0].axis.x, stats.chn[0].axis.y);
 		posTmp = cv::Point(stats.trackPos.x, stats.trackPos.y);
 		//cv::circle(core->m_dc[0], posTmp, 16, cvScalar(255), 2);
-		tmpValue += 1;
+		bHide = true;
 	}
 	return NULL;
 }
@@ -577,14 +541,14 @@ static int callback_process(void *handle, int chId, Mat frame, struct v4l2_buffe
 	if(chId>=2)
 		return 0;
 
-	processFrame_core(chId, frame.data, capInfo, V4L2_PIX_FMT_YUYV);
+	processFrame_core_file(chId, frame.data, capInfo, V4L2_PIX_FMT_YUYV);
 	return 0;
 }
 
 static CORE1001_INIT_PARAM initParam;
 static bool bLoop = true;
 static char strIpAddr[32] = "192.168.1.88";
-int main_core(int argc, char **argv)
+int main_core_file(int argc, char **argv)
 {
 	core = (ICore_1001 *)ICore::Qury(COREID_1001);
 	memset(&initParam, 0, sizeof(initParam));
@@ -609,12 +573,6 @@ int main_core(int argc, char **argv)
 	initParam.encStreamIpaddr = strIpAddr;
 	core->init(&initParam, sizeof(initParam));
 	start_thread(thrdhndl_timer, &bLoop);
-
-	MultiChVideo MultiCh;
-	MultiCh.m_user = NULL;
-	MultiCh.m_usrFunc = callback_process;
-	MultiCh.creat();
-	MultiCh.run();
 
 	if(initParam.bRender){
 		start_thread(thrdhndl_keyevent, &initParam.bRender);

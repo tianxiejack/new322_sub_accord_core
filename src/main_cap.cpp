@@ -18,7 +18,7 @@ static int curChannel = 0;
 static OSA_BufHndl *imgQ[SYS_CHN_CNT];
 static CRender *render = NULL;
 
-void processFrame_cap(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
+static void processFrame_cap(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
 {
 	static uint64 timestamp[MAX_CHAN] = {0ul,0ul};
 	char WindowName[64]={0};
