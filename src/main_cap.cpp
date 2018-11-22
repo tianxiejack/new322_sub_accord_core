@@ -174,7 +174,6 @@ int main_cap(int argc, char **argv)
 	dsInit.channelsSize[1].c = 3;
 	render->init(&dsInit);
 	render->run();
-	render->m_bOsd = true;
 
 	imgQ[0] = &render->m_bufQue[0];
 	imgQ[1] = &render->m_bufQue[1];

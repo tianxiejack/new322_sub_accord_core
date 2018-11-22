@@ -1,7 +1,7 @@
 %YAML:1.0
 cfg_mtd_accuracy: 2
-cfg_mtd_minArea: 1600
-cfg_mtd_maxArea: 160000
-cfg_mtd_threshold: 20
+cfg_mtd_minArea: 1000
+cfg_mtd_maxArea: 360000
+cfg_mtd_threshold: 10
 
 

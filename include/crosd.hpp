@@ -34,6 +34,7 @@ protected:
 	Pattern(int nVert, GLenum primitive = GL_LINES);
 	virtual ~Pattern(void);
 	virtual int update(const std::vector<cv::Point>& vpts, const cv::Scalar& color = cv::Scalar::all(255), int thickness = 1);
+public:
 	virtual void set(const cv::Scalar& color);
 	virtual void set(const int yuv);
 };
