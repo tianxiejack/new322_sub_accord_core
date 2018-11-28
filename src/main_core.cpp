@@ -12,6 +12,7 @@
 #include <opencv/cv.hpp>
 #include <linux/videodev2.h>
 #include <unistd.h>
+#include <osa_sem.h>
 #include "main.h"
 #include "crCore.hpp"
 #include "crosd.hpp"
@@ -62,13 +63,46 @@ static void extractYUYV2Gray(unsigned char *data,int ImgWidth, int ImgHeight)
 #endif
 }
 
-static int64 tmCap[2] = {0, 0};
-static double gfps[2] = {0, 0};
-static double gfps_min[2] = {1000, 1000};
-static double gfps_max[2] = {0, 0};
-static double gfps_mean[2] = {0, 0};
-static int64 gfps_tmStart[2] = {0, 0};
-static unsigned long gfps_count[2] = {0, 0};
+class FPS
+{
+public:
+	unsigned long nframes;
+	double fps;
+	double cmin;
+	double cmax;
+	double cmean;
+	int64 tmLast;
+	int64 tmStart;
+	FPS(void):nframes(0l), tmLast(0l), tmStart(0l),fps(0.0),cmin(1000.0),cmax(0.0),cmean(0.0){};
+	virtual ~FPS(){};
+	void signal(void){
+		nframes ++;
+		int64 tm = getTickCount();
+		if(tmLast > 0){
+			double elapsedTime = (tm - tmLast)*0.000001;
+			fps = 1000.f/elapsedTime;
+			cmin = min(cmin, fps);
+			cmax = max(cmax, fps);
+			if(nframes>10)
+				cmean = 1000.f*nframes/((tm - tmStart)*0.000001) + 0.0005;
+		}else{
+			tmStart = tm;
+			nframes = 0;
+		}
+		tmLast = tm;
+		if(nframes == 300){
+			cmin = fps;
+			cmax = 0;
+			nframes = 0;
+			tmStart = tm;
+		}
+	}
+};
+
+static FPS gcnt[2];
+static OSA_SemHndl semNotify;
+static FPS prcFps;
+static wchar_t strProFPS[128] = L"";
 
 static void processFrame_core(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
 {
@@ -77,27 +111,7 @@ static void processFrame_core(int cap_chid,unsigned char *src, struct v4l2_buffe
 		return;
 	}
 
-	int64 tm = getTickCount();
-	gfps_count[cap_chid]++;
-	if(tmCap[cap_chid] > 0){
-		double elapsedTime = (tm - tmCap[cap_chid])*0.000001;
-		gfps[cap_chid] = 1000.f/elapsedTime;
-		gfps_min[cap_chid] = min(gfps_min[cap_chid], gfps[cap_chid]);
-		gfps_max[cap_chid] = max(gfps_max[cap_chid], gfps[cap_chid]);
-		if(gfps_count[cap_chid]>10)
-		gfps_mean[cap_chid] = 1000.f*gfps_count[cap_chid]/((tm - gfps_tmStart[cap_chid])*0.000001) + 0.0005;
-	}else{
-		gfps_tmStart[cap_chid] = tm;
-		gfps_count[cap_chid] = 0;
-	}
-	tmCap[cap_chid] = tm;
-	if(gfps_count[cap_chid] == 300){
-		gfps_min[cap_chid] = gfps[cap_chid];
-		gfps_max[cap_chid] = gfps[cap_chid];
-		//gfps_mean[cap_chid] = gfps[cap_chid];
-		gfps_count[cap_chid] = 0;
-		gfps_tmStart[cap_chid] = tm;
-	}
+	gcnt[cap_chid].signal();
 
 	if(core != NULL){
 		/*if(cap_chid == 1){
@@ -495,7 +509,28 @@ static void *thrdhndl_keyevent(void *context)
 	//exit(0);
 	return NULL;
 }
-
+static void *thrdhndl_notify( void * p )
+{
+	using namespace cr_osd;
+	int64 tm = getTickCount();
+	//static std::vector<float> vArray;
+	static std::vector<float> vArray;
+	vArray.resize(300);
+	for(int i=0; i<300; i++)
+		vArray[i] = sin(i*10*0.017453292519943296);
+	IPattern* pat = IPattern::Create(&vArray, cv::Rect(0, 0, 600, 200));
+	while( *(bool*)p )
+	{
+		OSA_semWait(&semNotify, OSA_TIMEOUT_FOREVER);
+		int64 tm2 = getTickCount();
+		float interval = float((tm2-tm)*0.000000001f);
+		tm = tm2;
+		prcFps.signal();
+		vArray.erase(vArray.begin());
+		vArray.push_back(interval*10.0);
+	}
+	cr_osd::IPattern::Destroy(pat);
+}
 static void *thrdhndl_timer( void * p )
 {
 	struct timeval timeout;
@@ -512,11 +547,12 @@ static void *thrdhndl_timer( void * p )
 	cr_osd::put(strFov[1], cv::Point(50,45*3), cvScalar(255,255,255,255));
 	cr_osd::put(strFPS[0], cv::Point(50,45*4), cvScalar(255,255,255,255));
 	cr_osd::put(strFPS[1], cv::Point(50,45*5), cvScalar(255,255,255,255));
-	cr_osd::put(&tmpValue, L"value = %d", cv::Point(50,45*6), cvScalar(255,255,255,255));
-	cr_osd::put(&chrChId, 2, cv::Point(50, 45*7), cvScalar(255, 0, 0, 255), L"嵌润信息科技 TV", L"自动视频跟踪 FLR");
+	cr_osd::put(strProFPS, cv::Point(50,45*6), cvScalar(255,255,255,255));
+	cr_osd::put(&tmpValue, L"value = %d", cv::Point(50,45*7), cvScalar(255,255,255,255));
+	cr_osd::put(&chrChId, 2, cv::Point(50, 45*8), cvScalar(255, 0, 0, 255), L"嵌润信息科技 TV", L"自动视频跟踪 FLR");
 
 	cr_osd::Line line1;
-	line1.draw(cv::Point(50, 45*8), cv::Point(265, 45*8), cvScalar(255, 0,0,255), 2);
+	line1.draw(cv::Point(50, 45*9), cv::Point(265, 45*9), cvScalar(255, 0,0,255), 2);
 
 	cr_osd::Polygon polygon1(3, GL_LINE_LOOP);
 	cr_osd::Polygon polygon2(3, GL_POLYGON);
@@ -549,8 +585,9 @@ static void *thrdhndl_timer( void * p )
 				curTmt.tm_hour, curTmt.tm_min, curTmt.tm_sec);
 		swprintf(strFov[0], 64, L"ch0 FOV: %d", stats.chn[0].fovId);
 		swprintf(strFov[1], 64, L"ch1 FOV: %d", stats.chn[1].fovId);
-		swprintf(strFPS[0], 64, L"ch0 FPS: %.2f (%.2f %.2f)", gfps_mean[0],gfps_max[0],gfps_min[0]);
-		swprintf(strFPS[1], 64, L"ch1 FPS: %.2f (%.2f %.2f)", gfps_mean[1],gfps_max[1],gfps_min[1]);
+		swprintf(strFPS[0], 64, L"ch0 FPS: %.2f (%.2f %.2f)", gcnt[0].cmean,gcnt[0].cmax,gcnt[0].cmin);
+		swprintf(strFPS[1], 64, L"ch1 FPS: %.2f (%.2f %.2f)", gcnt[1].cmean,gcnt[1].cmax,gcnt[1].cmin);
+		swprintf(strProFPS, 128, L"PRC FPS: %.2f (%.2f %.2f)", prcFps.cmean,prcFps.cmax,prcFps.cmin);
 		//posTmp = cv::Point(stats.chn[0].axis.x, stats.chn[0].axis.y);
 		posTmp = cv::Point(stats.trackPos.x, stats.trackPos.y);
 		//cv::circle(core->m_dc[0], posTmp, 16, cvScalar(255), 2);
@@ -602,6 +639,8 @@ int main_core(int argc, char **argv)
 	initParam.bRender = true;
 	initParam.bEncoder = false;
 	initParam.bHideOSD = false;
+	OSA_semCreate(&semNotify, 1, 0);
+	initParam.notify = &semNotify;
 	if(argc>=2){
 		initParam.bEncoder = true;
 		strcpy(strIpAddr, argv[1]);
@@ -609,6 +648,7 @@ int main_core(int argc, char **argv)
 	initParam.encStreamIpaddr = strIpAddr;
 	core->init(&initParam, sizeof(initParam));
 	start_thread(thrdhndl_timer, &bLoop);
+	start_thread(thrdhndl_notify, &bLoop);
 
 	MultiChVideo MultiCh;
 	MultiCh.m_user = NULL;
@@ -627,6 +667,7 @@ int main_core(int argc, char **argv)
 	core->uninit();
 	ICore::Release(core);
 	core = NULL;
+	OSA_semDelete(&semNotify);
 
 	return 0;
 }

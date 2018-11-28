@@ -27,6 +27,15 @@ extern void set(const void *share, const cv::Point& pos);
 extern void erase(const void *share);
 extern void clear(void);
 
+class IPattern
+{
+public :
+	static IPattern* Create(const cv::Mat& mat, const cv::Rect& rcVeiw);
+	static IPattern* Create(const std::vector<float>* vArray, const cv::Rect& rcVeiw);
+	static void Destroy(IPattern *pattern);
+	virtual void draw(void) = 0;
+};
+
 class Pattern
 {
 	std::vector<void *> vbases;
