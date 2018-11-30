@@ -223,6 +223,7 @@ static void keyboard_event(unsigned char key, int x, int y)
 	static bool blobEnable = false;
 
 	char strMenus[2][1024] ={
+			"\n"
 			"----------------------------------------\n"
 			"|---Main Menu -------------------------|\n"
 			"----------------------------------------\n"
@@ -249,6 +250,7 @@ static void keyboard_event(unsigned char key, int x, int y)
 			" [esc][q]Quit                           \n"
 			"--> ",
 
+			"\n"
 			"----------------------------------------\n"
 			"|---Axis Menu -------------------------|\n"
 			"----------------------------------------\n"
@@ -528,6 +530,7 @@ static void *thrdhndl_notify( void * p )
 		prcFps.signal();
 		vArray.erase(vArray.begin());
 		vArray.push_back(interval*10.0);
+		swprintf(strProFPS, 128, L"PRC FPS: %.2f (%.2f %.2f)", prcFps.cmean,prcFps.cmax,prcFps.cmin);
 	}
 	cr_osd::IPattern::Destroy(pat);
 }
@@ -587,7 +590,7 @@ static void *thrdhndl_timer( void * p )
 		swprintf(strFov[1], 64, L"ch1 FOV: %d", stats.chn[1].fovId);
 		swprintf(strFPS[0], 64, L"ch0 FPS: %.2f (%.2f %.2f)", gcnt[0].cmean,gcnt[0].cmax,gcnt[0].cmin);
 		swprintf(strFPS[1], 64, L"ch1 FPS: %.2f (%.2f %.2f)", gcnt[1].cmean,gcnt[1].cmax,gcnt[1].cmin);
-		swprintf(strProFPS, 128, L"PRC FPS: %.2f (%.2f %.2f)", prcFps.cmean,prcFps.cmax,prcFps.cmin);
+		//swprintf(strProFPS, 128, L"PRC FPS: %.2f (%.2f %.2f)", prcFps.cmean,prcFps.cmax,prcFps.cmin);
 		//posTmp = cv::Point(stats.chn[0].axis.x, stats.chn[0].axis.y);
 		posTmp = cv::Point(stats.trackPos.x, stats.trackPos.y);
 		//cv::circle(core->m_dc[0], posTmp, 16, cvScalar(255), 2);
@@ -623,6 +626,10 @@ static bool bLoop = true;
 static char strIpAddr[32] = "192.168.1.88";
 int main_core(int argc, char **argv)
 {
+#if defined(__linux__)
+    setenv ("DISPLAY", ":1", 0);
+    printf("\n %s\n",getenv("DISPLAY"));
+#endif
 	core = (ICore_1001 *)ICore::Qury(COREID_1001);
 	memset(&initParam, 0, sizeof(initParam));
 	initParam.nChannels = SYS_CHN_CNT;
