@@ -158,8 +158,6 @@ int main_cap(int argc, char **argv)
 	DS_InitPrm dsInit;
 	memset(&dsInit, 0, sizeof(DS_InitPrm));
 	render = CRender::createObject();
-	render->create();
-	OSA_printf("render create success!");
 	dsInit.bFullScreen = false;
 	dsInit.keyboardfunc = keyboard_event;
 	dsInit.nChannels = SYS_CHN_CNT;
@@ -172,12 +170,10 @@ int main_cap(int argc, char **argv)
 	dsInit.channelsSize[1].w = SYS_CHN_WIDTH(1);
 	dsInit.channelsSize[1].h = SYS_CHN_HEIGHT(1);
 	dsInit.channelsSize[1].c = 3;
-	render->init(&dsInit);
-	render->run();
+	render->create(&dsInit);
 
 	imgQ[0] = &render->m_bufQue[0];
 	imgQ[1] = &render->m_bufQue[1];
-
 
 	MultiChVideo MultiCh;
 	MultiCh.m_user = NULL;
@@ -189,7 +185,6 @@ int main_cap(int argc, char **argv)
 	//glutSetCursor(GLUT_CURSOR_NONE);
 	glutMainLoop();
 
-	render->stop();
 	render->destroy();
 	CRender::destroyObject(render);
 

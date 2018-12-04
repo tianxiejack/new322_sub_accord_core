@@ -330,7 +330,7 @@ static void keyboard_event(unsigned char key, int x, int y)
 		static int colorTab[] = {WHITECOLOR,YELLOWCOLOR,CRAYCOLOR,GREENCOLOR,MAGENTACOLOR,REDCOLOR,BLUECOLOR,BLACKCOLOR};
 		static int icolor = 0;
 		icolor = (icolor<sizeof(colorTab)/sizeof(int)-1) ? (icolor+1) : 0;
-		core->setOSDColor(colorTab[icolor]);
+		core->setOSDColor(colorTab[icolor], 2);
 		cr_osd::set(colorTab[icolor]);
 		break;
 	case 'h':
@@ -521,6 +521,27 @@ static void *thrdhndl_notify( void * p )
 	for(int i=0; i<300; i++)
 		vArray[i] = sin(i*10*0.017453292519943296);
 	IPattern* pat = IPattern::Create(&vArray, cv::Rect(0, 0, 600, 200));
+
+		static cv::Mat wave(60, 60, CV_32FC1);
+		static cv::Rect rc(1500, 20, 400, 400);
+		static IPattern* pattern = NULL;
+		//static int cnt = 0;
+		//cnt ^=1;
+		//wave.setTo(Scalar::all((double)cnt));
+		if(pattern == NULL){
+
+			cv::RNG rng = cv::RNG(OSA_getCurTimeInMsec());
+			for(int i=0; i<wave.rows; i++){
+				for(int j=0; j<wave.cols; j++)
+				{
+//					wave.at<float>(i, j) = sin(i*2*CV_PI/180.0);
+					wave.at<float>(i, j)= std::exp(-1.0*((i-wave.rows/2)*(i-wave.rows/2)+(j-wave.cols/2)*(j-wave.cols/2))/(2.0*10*10));///(CV_PI*2.0*3.0*3.0);
+
+				}
+			}
+
+			pattern = IPattern::Create(wave, rc);
+		}
 	while( *(bool*)p )
 	{
 		OSA_semWait(&semNotify, OSA_TIMEOUT_FOREVER);
@@ -533,6 +554,7 @@ static void *thrdhndl_notify( void * p )
 		swprintf(strProFPS, 128, L"PRC FPS: %.2f (%.2f %.2f)", prcFps.cmean,prcFps.cmax,prcFps.cmin);
 	}
 	cr_osd::IPattern::Destroy(pat);
+	cr_osd::IPattern::Destroy(pattern);
 }
 static void *thrdhndl_timer( void * p )
 {
