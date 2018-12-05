@@ -332,7 +332,7 @@ void v4l2_camera::init_mmap(void)
 		exit(EXIT_FAILURE);
 	}
 
-	printf("%s qbuf cnt = %d\n", dev_name, req.count);
+	//printf("%s qbuf cnt = %d\n", dev_name, req.count);
 
 	buffers = (struct buffer *)calloc(req.count, sizeof(*buffers));
 
@@ -393,7 +393,7 @@ void v4l2_camera::init_userp(unsigned int buffer_size)
 			fprintf(stderr, "Insufficient buffer memory on %s\n", dev_name);
 			exit(EXIT_FAILURE);
 		}
-	printf("%s qbuf cnt = %d\n", dev_name, req.count);
+	//printf("%s qbuf cnt = %d\n", dev_name, req.count);
 	buffers = (struct buffer *)calloc(req.count, sizeof(*buffers));
 
 	if (!buffers) {
@@ -409,7 +409,7 @@ void v4l2_camera::init_userp(unsigned int buffer_size)
 			ret = cudaHostAlloc(&buffers[n_buffers].start, buffer_size, cudaHostAllocDefault);
 		assert(ret == cudaSuccess);
 		//cudaFreeHost();
-		printf("%s %d: buffer.start = %p %d\n", __func__, __LINE__, buffers[n_buffers].start, buffer_size);
+		//printf("%s %d: buffer.start = %p %d\n", __func__, __LINE__, buffers[n_buffers].start, buffer_size);
 
 		if (!buffers[n_buffers].start) {
 			fprintf(stderr, "Out of memory\n");
@@ -476,22 +476,22 @@ int v4l2_camera::init_device(void)
 
 	m_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (force_format) {
-		fprintf(stderr, "Set uyvy\r\n");
+		//fprintf(stderr, "Set uyvy\r\n");
 		m_fmt.fmt.pix.width       = imgwidth; //replace
 		m_fmt.fmt.pix.height      = imgheight; //replace
 		m_fmt.fmt.pix.pixelformat = imgformat;// V4L2_PIX_FMT_UYVY;
 		m_fmt.fmt.pix.field       = V4L2_FIELD_ANY;
 		//m_fmt.fmt.pix.code=0;
-		printf("[%d]******width =%d height=%d\n",__LINE__, m_fmt.fmt.pix.width,m_fmt.fmt.pix.height);
+		//printf("[%d]******width =%d height=%d\n",__LINE__, m_fmt.fmt.pix.width,m_fmt.fmt.pix.height);
 
 		if (-1 == xioctl(m_devFd, VIDIOC_S_FMT, &m_fmt))
 		{
 			 errno_exit("VIDIOC_S_FMT");
 		}
-		printf("[%d]******width =%d height=%d\n",__LINE__, m_fmt.fmt.pix.width,m_fmt.fmt.pix.height);
+		//printf("[%d]******width =%d height=%d\n",__LINE__, m_fmt.fmt.pix.width,m_fmt.fmt.pix.height);
 		if (-1 == xioctl(m_devFd, VIDIOC_G_FMT, &m_fmt))
 			errno_exit("VIDIOC_G_FMT");
-		printf("[%d]******width =%d height=%d\n",__LINE__, m_fmt.fmt.pix.width,m_fmt.fmt.pix.height);
+		//printf("[%d]******width =%d height=%d\n",__LINE__, m_fmt.fmt.pix.width,m_fmt.fmt.pix.height);
 		/* Note VIDIOC_S_FMT may change width and height. */
 	} else {
 		/* Preserve original settings as set by v4l2-ctl for example */

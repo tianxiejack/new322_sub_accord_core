@@ -53,4 +53,5 @@ cfg_avt_50: 0         #target DetectTrkSR Enable
 cfg_avt_51: 0         #UtcSetSceneEnh(obj, bEnhScene)
 cfg_avt_52: 1         #UtcSetSceneEnhMacro(obj, nrxScene);
 cfg_avt_53: 1         #UtcSetSceneEnhMacro(obj, nryScene);
+cfg_avt_54: 10000     #lossCoastTelapseMax (ms)
 

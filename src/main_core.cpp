@@ -102,7 +102,7 @@ public:
 static FPS gcnt[2];
 static OSA_SemHndl semNotify;
 static FPS prcFps;
-static wchar_t strProFPS[128] = L"";
+
 
 static void processFrame_core(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
 {
@@ -511,8 +511,46 @@ static void *thrdhndl_keyevent(void *context)
 	//exit(0);
 	return NULL;
 }
+
+static CORE1001_STATS stats;
+static wchar_t strSysTimer[64] = L"";
+static wchar_t strFov[2][64] = {L"",L""};
+static wchar_t strFPS[2][64] = {L"",L""};
+static wchar_t strProFPS[128] = L"";
+
+static void fontPatterns(void)
+{
+	cr_osd::put(strSysTimer, cv::Point(50,45), cvScalar(255,255,255,255));
+	cr_osd::put(strFov[0], cv::Point(50,45*2), cvScalar(255,255,255,255));
+	cr_osd::put(strFov[1], cv::Point(50,45*3), cvScalar(255,255,255,255));
+	cr_osd::put(strFPS[0], cv::Point(50,45*4), cvScalar(255,255,255,255));
+	cr_osd::put(strFPS[1], cv::Point(50,45*5), cvScalar(255,255,255,255));
+	cr_osd::put(strProFPS, cv::Point(50,45*6), cvScalar(255,255,255,255));
+	cr_osd::put(&stats.lossCoastFrames, L"coast = %d", cv::Point(50,45*7), cvScalar(255,255,255,255));
+	cr_osd::put(&chrChId, 2, cv::Point(50, 45*8), cvScalar(255, 0, 0, 255), L"嵌润信息科技 TV", L"自动视频跟踪 FLR");
+	cr_osd::put(&stats.iTrackorStat, 4, cv::Point(50, 45*9), cvScalar(0, 0, 255, 255), L"捕获", L"锁定", L"惯性", L"丢失");
+
+	cr_osd::Line line1;
+	line1.draw(cv::Point(50, 45*9), cv::Point(265, 45*9), cvScalar(255, 0,0,255), 2);
+
+	cr_osd::Polygon polygon1(3, GL_LINE_LOOP);
+	cr_osd::Polygon polygon2(3, GL_POLYGON);
+	std::vector<cv::Point> vpts;
+	vpts.clear();
+	vpts.push_back(cv::Point(300, 440));
+	vpts.push_back(cv::Point(320, 440));
+	vpts.push_back(cv::Point(310, 470));
+	polygon1.draw(vpts, cvScalar(0, 0, 255,255), 2);
+	vpts.clear();
+	vpts.push_back(cv::Point(310, 410));
+	vpts.push_back(cv::Point(300, 440));
+	vpts.push_back(cv::Point(320, 440));
+	polygon2.draw(vpts, cvScalar(255, 0, 0,255), 2);
+}
+
 static void *thrdhndl_notify( void * p )
 {
+#if 1
 	using namespace cr_osd;
 	int64 tm = getTickCount();
 	//static std::vector<float> vArray;
@@ -520,7 +558,7 @@ static void *thrdhndl_notify( void * p )
 	vArray.resize(300);
 	for(int i=0; i<300; i++)
 		vArray[i] = sin(i*10*0.017453292519943296);
-	IPattern* pat = IPattern::Create(&vArray, cv::Rect(0, 0, 600, 200));
+	IPattern* pat = IPattern::Create(&vArray, cv::Rect(0, 0, 600, 200), cv::Scalar(0, 255, 255, 255));
 
 		static cv::Mat wave(60, 60, CV_32FC1);
 		static cv::Rect rc(1500, 20, 400, 400);
@@ -540,11 +578,13 @@ static void *thrdhndl_notify( void * p )
 				}
 			}
 
-			pattern = IPattern::Create(wave, rc);
+			pattern = IPattern::Create(wave, rc, cv::Scalar(0, 255, 0, 128));
 		}
 	while( *(bool*)p )
 	{
 		OSA_semWait(&semNotify, OSA_TIMEOUT_FOREVER);
+		memcpy(&stats, &core->m_stats, sizeof(stats));
+
 		int64 tm2 = getTickCount();
 		float interval = float((tm2-tm)*0.000000001f);
 		tm = tm2;
@@ -555,57 +595,22 @@ static void *thrdhndl_notify( void * p )
 	}
 	cr_osd::IPattern::Destroy(pat);
 	cr_osd::IPattern::Destroy(pattern);
+#endif
 }
 static void *thrdhndl_timer( void * p )
 {
-	struct timeval timeout;
-	wchar_t strTmp[64] = L"";
-	wchar_t strFov[2][64] = {L"",L""};
-	wchar_t strFPS[2][64] = {L"",L""};
 	cv::Point posTmp;
-	CORE1001_STATS stats;
-
-	unsigned int tmpValue = 0;
-
-	cr_osd::put(strTmp, cv::Point(50,45), cvScalar(255,255,255,255));
-	cr_osd::put(strFov[0], cv::Point(50,45*2), cvScalar(255,255,255,255));
-	cr_osd::put(strFov[1], cv::Point(50,45*3), cvScalar(255,255,255,255));
-	cr_osd::put(strFPS[0], cv::Point(50,45*4), cvScalar(255,255,255,255));
-	cr_osd::put(strFPS[1], cv::Point(50,45*5), cvScalar(255,255,255,255));
-	cr_osd::put(strProFPS, cv::Point(50,45*6), cvScalar(255,255,255,255));
-	cr_osd::put(&tmpValue, L"value = %d", cv::Point(50,45*7), cvScalar(255,255,255,255));
-	cr_osd::put(&chrChId, 2, cv::Point(50, 45*8), cvScalar(255, 0, 0, 255), L"嵌润信息科技 TV", L"自动视频跟踪 FLR");
-
-	cr_osd::Line line1;
-	line1.draw(cv::Point(50, 45*9), cv::Point(265, 45*9), cvScalar(255, 0,0,255), 2);
-
-	cr_osd::Polygon polygon1(3, GL_LINE_LOOP);
-	cr_osd::Polygon polygon2(3, GL_POLYGON);
-	std::vector<cv::Point> vpts;
-	vpts.clear();
-	vpts.push_back(cv::Point(300, 440));
-	vpts.push_back(cv::Point(320, 440));
-	vpts.push_back(cv::Point(310, 470));
-	polygon1.draw(vpts, cvScalar(0, 0, 255,255), 2);
-	vpts.clear();
-	vpts.push_back(cv::Point(310, 410));
-	vpts.push_back(cv::Point(300, 440));
-	vpts.push_back(cv::Point(320, 440));
-	polygon2.draw(vpts, cvScalar(255, 0, 0,255), 2);
-
-
-
+	struct timeval timeout;
 	while( *(bool*)p )
 	{
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 100*1000;
 		select( 0, NULL, NULL, NULL, &timeout );
-		memcpy(&stats, &core->m_stats, sizeof(stats));
 		struct tm curTmt;
 		time_t curTm;
 		time(&curTm);
 		memcpy(&curTmt,localtime(&curTm),sizeof(curTmt));
-		swprintf(strTmp, 64, L"%04d-%02d-%02d %02d:%02d:%02d",
+		swprintf(strSysTimer, 64, L"%04d-%02d-%02d %02d:%02d:%02d",
 				curTmt.tm_year+1900, curTmt.tm_mon+1, curTmt.tm_mday,
 				curTmt.tm_hour, curTmt.tm_min, curTmt.tm_sec);
 		swprintf(strFov[0], 64, L"ch0 FOV: %d", stats.chn[0].fovId);
@@ -616,7 +621,6 @@ static void *thrdhndl_timer( void * p )
 		//posTmp = cv::Point(stats.chn[0].axis.x, stats.chn[0].axis.y);
 		posTmp = cv::Point(stats.trackPos.x, stats.trackPos.y);
 		//cv::circle(core->m_dc[0], posTmp, 16, cvScalar(255), 2);
-		tmpValue += 1;
 	}
 	return NULL;
 }
@@ -648,10 +652,6 @@ static bool bLoop = true;
 static char strIpAddr[32] = "192.168.1.88";
 int main_core(int argc, char **argv)
 {
-#if defined(__linux__)
-    setenv ("DISPLAY", ":1", 0);
-    printf("\n %s\n",getenv("DISPLAY"));
-#endif
 	core = (ICore_1001 *)ICore::Qury(COREID_1001);
 	memset(&initParam, 0, sizeof(initParam));
 	initParam.nChannels = SYS_CHN_CNT;
@@ -678,6 +678,8 @@ int main_core(int argc, char **argv)
 	core->init(&initParam, sizeof(initParam));
 	start_thread(thrdhndl_timer, &bLoop);
 	start_thread(thrdhndl_notify, &bLoop);
+
+	fontPatterns();
 
 	MultiChVideo MultiCh;
 	MultiCh.m_user = NULL;

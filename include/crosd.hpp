@@ -30,8 +30,8 @@ extern void clear(void);
 class IPattern
 {
 public :
-	static IPattern* Create(const cv::Mat& mat, const cv::Rect& rcVeiw);
-	static IPattern* Create(const std::vector<float>* vArray, const cv::Rect& rcVeiw);
+	static IPattern* Create(const cv::Mat& mat, const cv::Rect& rcVeiw, const cv::Scalar& color = cv::Scalar::all(255));
+	static IPattern* Create(const std::vector<float>* vArray, const cv::Rect& rcVeiw, const cv::Scalar& color = cv::Scalar::all(255));
 	static void Destroy(IPattern *pattern);
 	virtual void draw(void) = 0;
 };

@@ -2,14 +2,23 @@
 #ifndef DISPLAYER_HPP_
 #define DISPLAYER_HPP_
 
+//#define __UI_EGL
 #define DS_RENDER_MAX		(9)
 #define DS_CHAN_MAX         (4)
 
 #include <opencv2/opencv.hpp>
+#include <osa_buf.h>
+
+#ifdef __UI_EGL
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#else
 #include <glew.h>
 #include <glut.h>
 #include <freeglut_ext.h>
-#include "osa_buf.h"
+#endif
 
 using namespace std;
 
@@ -98,8 +107,6 @@ public:
 	int dynamic_config(DS_CFG type, int iPrm, void* pPrm);
 	//int get_videoSize(int chId, DS_Size &size);
 	GLuint async_display(int chId, int width, int height, int channels);
-	int setFullScreen(bool bFull);
-	void disp_fps();
 	int m_mainWinWidth;
 	int m_mainWinHeight;
 	bool m_bFullScreen;
@@ -132,6 +139,8 @@ protected:
 	DS_BlendPrm m_glBlendPrm[DS_CHAN_MAX*DS_CHAN_MAX];
 	GLuint textureId_input[DS_CHAN_MAX];
 
+	int gl_init();
+	void gl_uninit();
 	void gl_display();
 	void gl_updateTexVideo();
 	int gl_updateVertex();
@@ -150,6 +159,37 @@ private:
 	uint64  m_tmBak[DS_CHAN_MAX];
 	int64   m_tmRender;
 	bool m_waitSync;
+
+#ifdef __UI_EGL
+private:
+    Display * x_display;    /**< Connection to the X server created using
+                                  XOpenDisplay(). */
+    Window x_window;        /**< Holds the window to be used for rendering
+                                  created using XCreateWindow(). */
+
+    EGLDisplay egl_display;     /**< Holds the EGL Display connection. */
+    EGLContext egl_context;     /**< Holds the EGL rendering context. */
+    EGLSurface egl_surface;     /**< Holds the EGL Window render surface. */
+    EGLConfig egl_config;       /**< Holds the EGL frame buffer configuration
+                                     to be usedfor rendering. */
+
+    bool stop_thread;   /**< Boolean variable used to signal rendering thread
+                             to stop. */
+    pthread_t render_thread;        /**< The pthread id of the rendering thread. */
+    pthread_mutex_t render_lock;    /**< Used for synchronization. */
+    pthread_cond_t render_cond;     /**< Used for synchronization. */
+
+    //uint32_t texture_id;        /**< Holds the GL Texture ID used for rendering. */
+    GC gc;                      /**< Graphic Context */
+    XFontStruct *fontinfo;      /**< Brush's font info */
+    char overlay_str[512];       /**< Overlay's text */
+
+    static void * renderThread(void *arg){
+    	CRender *renderer = (CRender *) arg;
+    	renderer->renderHandle();
+    }
+    int renderHandle(void);
+#endif
 };
 
 #endif /* DISPLAYER_HPP_ */

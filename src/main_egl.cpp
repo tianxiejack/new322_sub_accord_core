@@ -158,7 +158,7 @@ static void renderCall(int stepIdx, int stepSub, int context)
 	}
 }
 
-int main_cap(int argc, char **argv)
+int main_egl(int argc, char **argv)
 {
 	cuConvertInit(SYS_CHN_CNT);
 

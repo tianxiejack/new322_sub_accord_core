@@ -21,5 +21,6 @@ static int tFPS[SYS_CHN_CNT] = {30, 60};
 int main_cap(int argc, char **argv);
 int main_core(int argc, char **argv);
 int main_core_file(int argc, char **argv);
+int main_egl(int argc, char **argv);
 
 #endif /* MAIN_H_ */
