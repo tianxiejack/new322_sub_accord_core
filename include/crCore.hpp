@@ -75,6 +75,7 @@ typedef struct _core_1001_init{
 	bool bHideOSD;
 	cv::Size renderSize;
 	int renderFPS;
+	float renderSched;
 	char *encStreamIpaddr;
 	int *encoderParamTab[3];
 	int *encoderParamTabMulti[CORE_CHN_MAX][3];
