@@ -35,8 +35,9 @@
 									<listOptionValue builtIn="false" value="../src/encTrans"/>
 									<listOptionValue builtIn="false" value="../src"/>
 									<listOptionValue builtIn="false" value="../src/core"/>
-									<listOptionValue builtIn="false" value="../src/cr_osa/inc"/>
+									<listOptionValue builtIn="false" value="../include/osa"/>
 									<listOptionValue builtIn="false" value="../src/nvMedia"/>
+									<listOptionValue builtIn="false" value="../include/EGL"/>
 								</option>
 								<option id="nvcc.compiler.undef.symbol.1686673775" name="Undefined symbols (-U)" superClass="nvcc.compiler.undef.symbol"/>
 								<inputType id="nvcc.compiler.input.cu.1597305464" superClass="nvcc.compiler.input.cu"/>
@@ -44,7 +45,26 @@
 								<inputType id="nvcc.compiler.input.c.515756950" superClass="nvcc.compiler.input.c"/>
 							</tool>
 							<tool id="nvcc.linker.base.1601655141" name="NVCC Linker" superClass="nvcc.linker.base">
-								<option id="nvcc.linker.option.libs.64215367" name="Libraries (-l)" superClass="nvcc.linker.option.libs"/>
+								<option id="nvcc.linker.option.libs.64215367" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="opencv_core"/>
+									<listOptionValue builtIn="false" value="opencv_video"/>
+									<listOptionValue builtIn="false" value="opencv_highgui"/>
+									<listOptionValue builtIn="false" value="opencv_imgproc"/>
+									<listOptionValue builtIn="false" value="gomp"/>
+									<listOptionValue builtIn="false" value="GL"/>
+									<listOptionValue builtIn="false" value="GLEW"/>
+									<listOptionValue builtIn="false" value="glut"/>
+									<listOptionValue builtIn="false" value="cudart"/>
+									<listOptionValue builtIn="false" value="crosa"/>
+									<listOptionValue builtIn="false" value="crmtd"/>
+									<listOptionValue builtIn="false" value="dft"/>
+									<listOptionValue builtIn="false" value="enh"/>
+									<listOptionValue builtIn="false" value="crgst"/>
+									<listOptionValue builtIn="false" value="crcore"/>
+									<listOptionValue builtIn="false" value="MMTD"/>
+									<listOptionValue builtIn="false" value="crosd"/>
+									<listOptionValue builtIn="false" value="crencOver422uart"/>
+								</option>
 								<option id="nvcc.linker.option.paths.687332063" name="Library search path (-L)" superClass="nvcc.linker.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/usr/lib"/>
 									<listOptionValue builtIn="false" value="/usr/lib/aarch64-linux-gnu"/>
@@ -106,6 +126,7 @@
 									<listOptionValue builtIn="false" value="../src/core"/>
 									<listOptionValue builtIn="false" value="../src/nvMedia"/>
 									<listOptionValue builtIn="false" value="../include/osa"/>
+									<listOptionValue builtIn="false" value="../include/EGL"/>
 								</option>
 								<option id="nvcc.compiler.compileroptions.1323843527" name="Preprocessor options (-Xcompiler)" superClass="nvcc.compiler.compileroptions" valueType="stringList">
 									<listOptionValue builtIn="false" value="-fopenmp"/>
@@ -116,32 +137,24 @@
 							</tool>
 							<tool id="nvcc.linker.base.1338525675" name="NVCC Linker" superClass="nvcc.linker.base">
 								<option id="nvcc.linker.option.libs.966445892" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_highgui"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_core"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_video"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_calib3d"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_features2d"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_flann"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_highgui"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_imgproc"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_contrib"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="opencv_objdetect"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="gomp"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="GL"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="GLEW"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="glut"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="cudart"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="nppi"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="nppc"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="crosa"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="crmtd"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="dft"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="enh"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="crgst"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="v4l2"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="crcore"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="argus"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="MMTD"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="crosd"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="crencOver422uart"/>
 								</option>
 								<option id="nvcc.linker.option.paths.2055824705" name="Library search path (-L)" superClass="nvcc.linker.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/usr/lib"/>

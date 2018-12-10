@@ -21,7 +21,7 @@ using namespace cv;
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
 
-#define MAX_CHAN     (2)	// for XGS021
+#define MAX_CHAN     (3)	// for XGS021
 #define BUFFER_CNT_PER_CHAN	(6)
 #define LARGE_PHOTO_WIDTH  (4096)
 #define LARGE_PHOTO_HEIGHT (3072)

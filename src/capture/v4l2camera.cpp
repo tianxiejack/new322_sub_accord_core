@@ -64,8 +64,8 @@ Id(/*devId*/0)
 			imgformat 	= V4L2_PIX_FMT_YUYV;
 			imgwidth  	= INPUT_IMAGE_WIDTH;
 			imgheight 	= INPUT_IMAGE_HEIGHT;
-			imgstride 	= imgwidth;
-			bufSize 	= imgwidth * imgheight;
+			imgstride 	= imgwidth * 2;
+			bufSize 	= imgwidth * imgheight * 2;
 			imgtype     = CV_8UC2;
 			memType = MEMORY_LOCKED;
 			bufferCount = 6;

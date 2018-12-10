@@ -129,9 +129,6 @@ static void keyboard_event(unsigned char key, int x, int y)
 
 static int callback_process(void *handle, int chId, Mat frame, struct v4l2_buffer capInfo, int format)
 {
-	if(chId>=2)
-		return 0;
-
 	/*if(chId == 0){
 		static int cc = 0;
 		if(cc%100 != 0){

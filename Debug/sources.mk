@@ -26,12 +26,5 @@ C_UPPER_DEPS :=
 # Every subdirectory with source files must be described here
 SUBDIRS := \
 src \
-src/encTrans \
 src/capture \
-src/UART \
-src/OSD \
-src/OSA_CAP/src \
-src/MSGDRI \
-src/ENHIST \
-src/DXAPP \
 

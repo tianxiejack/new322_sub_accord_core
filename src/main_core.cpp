@@ -99,10 +99,14 @@ public:
 	}
 };
 
-static FPS gcnt[2];
+static FPS gcnt[SYS_CHN_CNT];
 static OSA_SemHndl semNotify;
 static FPS prcFps;
-
+static CORE1001_STATS stats;
+static wchar_t strSysTimer[64] = L"XXX-XX-XX XX:XX:XX";
+static wchar_t strFov[2][128] = {L"",L""};
+static wchar_t strFPS[2][128] = {L"",L""};
+static wchar_t strProFPS[128] = L"";
 
 static void processFrame_core(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
 {
@@ -112,6 +116,9 @@ static void processFrame_core(int cap_chid,unsigned char *src, struct v4l2_buffe
 	}
 
 	gcnt[cap_chid].signal();
+	swprintf(strFPS[0], 64, L"ch0 FPS: %.2f (%.2f %.2f)", gcnt[0].cmean,gcnt[0].cmax,gcnt[0].cmin);
+	swprintf(strFPS[1], 64, L"ch1 FPS: %.2f (%.2f %.2f)", gcnt[1].cmean,gcnt[1].cmax,gcnt[1].cmin);
+
 
 	if(core != NULL){
 		/*if(cap_chid == 1){
@@ -216,7 +223,7 @@ static int chrChId = 0;
 static void keyboard_event(unsigned char key, int x, int y)
 {
 	static cv::Size winSize(80, 60);
-	static int fovId[2] = {0,0};
+	static int fovId[SYS_CHN_CNT] = {0,0};
 	static bool mmtdEnable = false;
 	static bool trkEnable = false;
 	static bool motionDetect = false;
@@ -282,9 +289,16 @@ static void keyboard_event(unsigned char key, int x, int y)
 		chrChId = 1;
 		winSize.width *= SYS_CHN_WIDTH(chrChId)/1920;
 		winSize.height *= SYS_CHN_HEIGHT(chrChId)/1080;
-		//OSA_printf("%s %d: ...", __func__, __LINE__);
 		core->setMainChId(chrChId, fovId[chrChId], 0, winSize);
-		OSA_printf("%s %d: ...leave\n", __func__, __LINE__);
+		break;
+	case 'z':
+		OSA_printf("%s %d: ...", __func__, __LINE__);
+		if(chrChId == 2)
+			fovId[chrChId] = (fovId[chrChId]<4-1) ? (fovId[chrChId]+1) : 0;
+		chrChId = 2;
+		winSize.width *= SYS_CHN_WIDTH(chrChId)/1920;
+		winSize.height *= SYS_CHN_HEIGHT(chrChId)/1080;
+		core->setMainChId(chrChId, fovId[chrChId], 0, winSize);
 		break;
 	case 'u':
 		static int speedLevel = 0;
@@ -395,7 +409,7 @@ static void keyboard_event(unsigned char key, int x, int y)
 	case 'p':
 		static int subChId = -1;
 		subChId++;
-		if(subChId==2)
+		if(subChId==SYS_CHN_CNT)
 			subChId = -1;
 		core->setSubChId(subChId);
 		break;
@@ -512,12 +526,6 @@ static void *thrdhndl_keyevent(void *context)
 	return NULL;
 }
 
-static CORE1001_STATS stats;
-static wchar_t strSysTimer[64] = L"";
-static wchar_t strFov[2][64] = {L"",L""};
-static wchar_t strFPS[2][64] = {L"",L""};
-static wchar_t strProFPS[128] = L"";
-
 static void fontPatterns(void)
 {
 	cr_osd::put(strSysTimer, cv::Point(50,45), cvScalar(255,255,255,255));
@@ -592,6 +600,8 @@ static void *thrdhndl_notify( void * p )
 		vArray.erase(vArray.begin());
 		vArray.push_back(interval*10.0);
 		swprintf(strProFPS, 128, L"PRC FPS: %.2f (%.2f %.2f)", prcFps.cmean,prcFps.cmax,prcFps.cmin);
+		swprintf(strFov[0], 64, L"ch0 FOV: %d", stats.chn[0].fovId);
+		swprintf(strFov[1], 64, L"ch1 FOV: %d", stats.chn[1].fovId);
 	}
 	cr_osd::IPattern::Destroy(pat);
 	cr_osd::IPattern::Destroy(pattern);
@@ -599,7 +609,7 @@ static void *thrdhndl_notify( void * p )
 }
 static void *thrdhndl_timer( void * p )
 {
-	cv::Point posTmp;
+	//cv::Point posTmp;
 	struct timeval timeout;
 	while( *(bool*)p )
 	{
@@ -613,13 +623,10 @@ static void *thrdhndl_timer( void * p )
 		swprintf(strSysTimer, 64, L"%04d-%02d-%02d %02d:%02d:%02d",
 				curTmt.tm_year+1900, curTmt.tm_mon+1, curTmt.tm_mday,
 				curTmt.tm_hour, curTmt.tm_min, curTmt.tm_sec);
-		swprintf(strFov[0], 64, L"ch0 FOV: %d", stats.chn[0].fovId);
-		swprintf(strFov[1], 64, L"ch1 FOV: %d", stats.chn[1].fovId);
-		swprintf(strFPS[0], 64, L"ch0 FPS: %.2f (%.2f %.2f)", gcnt[0].cmean,gcnt[0].cmax,gcnt[0].cmin);
-		swprintf(strFPS[1], 64, L"ch1 FPS: %.2f (%.2f %.2f)", gcnt[1].cmean,gcnt[1].cmax,gcnt[1].cmin);
+
 		//swprintf(strProFPS, 128, L"PRC FPS: %.2f (%.2f %.2f)", prcFps.cmean,prcFps.cmax,prcFps.cmin);
 		//posTmp = cv::Point(stats.chn[0].axis.x, stats.chn[0].axis.y);
-		posTmp = cv::Point(stats.trackPos.x, stats.trackPos.y);
+		//posTmp = cv::Point(stats.trackPos.x, stats.trackPos.y);
 		//cv::circle(core->m_dc[0], posTmp, 16, cvScalar(255), 2);
 	}
 	return NULL;
@@ -640,9 +647,6 @@ static int encParamTab[][8] = {
 
 static int callback_process(void *handle, int chId, Mat frame, struct v4l2_buffer capInfo, int format)
 {
-	if(chId>=2)
-		return 0;
-
 	processFrame_core(chId, frame.data, capInfo, V4L2_PIX_FMT_YUYV);
 	return 0;
 }
@@ -662,6 +666,9 @@ int main_core(int argc, char **argv)
 	initParam.chnInfo[1].imgSize = cv::Size(SYS_CHN_WIDTH(1), SYS_CHN_HEIGHT(1));
 	initParam.chnInfo[1].fps = SYS_CHN_FPS(1);
 	initParam.chnInfo[1].format = V4L2_PIX_FMT_YUYV;
+	initParam.chnInfo[2].imgSize = cv::Size(SYS_CHN_WIDTH(1), SYS_CHN_HEIGHT(1));
+	initParam.chnInfo[2].fps = SYS_CHN_FPS(1);
+	initParam.chnInfo[2].format = V4L2_PIX_FMT_YUYV;
 	initParam.encoderParamTab[0] = encParamTab[0];
 	initParam.encoderParamTab[1] = encParamTab[1];
 	initParam.encoderParamTab[2] = encParamTab[2];

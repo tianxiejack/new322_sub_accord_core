@@ -26,6 +26,7 @@ extern void set(const int yuv);
 extern void set(const void *share, const cv::Point& pos);
 extern void erase(const void *share);
 extern void clear(void);
+extern void shprintf(wchar_t *__restrict share, size_t n, const wchar_t *__restrict format, ...);
 
 class IPattern
 {

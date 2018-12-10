@@ -33,10 +33,12 @@ int MultiChVideo::creat()
 		VCap[i] = new v4l2_camera(3);
 		VCap[i]->creat();
 	}*/
-	VCap[0] = new v4l2_camera(1);
+	VCap[0] = new v4l2_camera(0);
 	VCap[0]->creat();
-	VCap[1] = new v4l2_camera(0);
+	VCap[1] = new v4l2_camera(1);
 	VCap[1]->creat();
+	VCap[2] = new v4l2_camera(2);
+	VCap[2]->creat();
 
 	for(chId=0; chId<MAX_CHAN; chId++){
 		m_bufQueue[chId] = new OSA_BufHndl;
