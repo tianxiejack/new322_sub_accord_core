@@ -2,14 +2,14 @@
 #ifndef DISPLAYER_HPP_
 #define DISPLAYER_HPP_
 
-//#define __UI_EGL
+//#define __EGL__
 #define DS_RENDER_MAX		(9)
 #define DS_CHAN_MAX         (4)
 
 #include <opencv2/opencv.hpp>
 #include <osa_buf.h>
 
-#ifdef __UI_EGL
+#ifdef __EGL__
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
@@ -24,11 +24,12 @@ using namespace std;
 
 typedef cv::Matx<GLfloat, 4, 4> GLMatx44f;
 
-typedef struct _ds_size{
+typedef struct _ds_chninfo{
 	int w;
 	int h;
 	int c;
-}DS_Size;
+	int fps;
+}DS_ChnInfo;
 
 typedef cv::Rect DS_Rect;
 
@@ -56,9 +57,10 @@ typedef struct _ds_init_param{
 	int winWidth;
 	int winHeight;
 	int disFPS;
+	float disSched;
 	bool bScript;
 	char szScriptFile[256];
-	DS_Size channelsSize[DS_CHAN_MAX];
+	DS_ChnInfo channelInfo[DS_CHAN_MAX];
 	int nChannels;
 	int nQueueSize;
 	int memType;
@@ -82,6 +84,7 @@ public:
 	static void destroyObject(CRender* obj);
 	int create(DS_InitPrm *pPrm);
 	int destroy();
+	int setFPS(float fps);
 
 	typedef enum{
 		DS_CFG_ChId = 0,
@@ -111,7 +114,7 @@ public:
 	int m_mainWinHeight;
 	bool m_bFullScreen;
 	//int m_thickness;
-	DS_Size m_videoSize[DS_CHAN_MAX];
+	DS_ChnInfo m_videoInfo[DS_CHAN_MAX];
 	GLuint buffId_input[DS_CHAN_MAX];
 	cr_osa::OSA_BufHndl m_bufQue[DS_CHAN_MAX];
 	//OSA_MutexHndl *m_cumutex;
@@ -160,7 +163,16 @@ private:
 	int64   m_tmRender;
 	bool m_waitSync;
 
-#ifdef __UI_EGL
+	pthread_mutex_t render_lock;    /**< Used for synchronization. */
+	pthread_cond_t render_cond;     /**< Used for synchronization. */
+    uint64_t render_time_sec;       /**< Seconds component of the time for which a
+                                         frame should be displayed. */
+    uint64_t render_time_nsec;      /**< Nanoseconds component of the time for which
+                                         a frame should be displayed. */
+    struct timespec last_render_time;   /**< Rendering time for the last buffer. */
+    int m_nSwapTimeOut;
+
+#ifdef __EGL__
 private:
     Display * x_display;    /**< Connection to the X server created using
                                   XOpenDisplay(). */
@@ -176,8 +188,6 @@ private:
     bool stop_thread;   /**< Boolean variable used to signal rendering thread
                              to stop. */
     pthread_t render_thread;        /**< The pthread id of the rendering thread. */
-    pthread_mutex_t render_lock;    /**< Used for synchronization. */
-    pthread_cond_t render_cond;     /**< Used for synchronization. */
 
     //uint32_t texture_id;        /**< Holds the GL Texture ID used for rendering. */
     GC gc;                      /**< Graphic Context */
