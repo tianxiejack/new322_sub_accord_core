@@ -108,10 +108,9 @@ public:
 	};
 
 	int dynamic_config(DS_CFG type, int iPrm, void* pPrm);
-	//int get_videoSize(int chId, DS_Size &size);
-	GLuint async_display(int chId, int width, int height, int channels);
-	int m_mainWinWidth;
-	int m_mainWinHeight;
+	int m_winId;
+	int m_winWidth;
+	int m_winHeight;
 	bool m_bFullScreen;
 	//int m_thickness;
 	DS_ChnInfo m_videoInfo[DS_CHAN_MAX];
@@ -126,11 +125,15 @@ protected:
 	int m_maskMap[DS_CHAN_MAX];
 	int m_renderCount;
 	int initRender(bool updateMap = true);
+	GLuint async_display(int chId, int width, int height, int channels);
 
 protected:
 	static void _display(void);
 	static void _reshape(int width, int height);
 	static void _close(void);
+
+	static void _display2(void);
+	void gl_display2();
 
 protected:
 	GLint	m_glProgram[8];
