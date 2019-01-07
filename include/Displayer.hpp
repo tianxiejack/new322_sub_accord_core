@@ -71,14 +71,14 @@ typedef struct _ds_init_param{
 	void (*keySpecialfunc)( int, int, int );
 	void (*visibilityfunc)(int state);
 	void (*closefunc)(void);
-	void (*renderfunc)(int stepIdx, int stepSub, int context);
+	void (*renderfunc)(int displayId, int stepIdx, int stepSub, int context);
 }DS_InitPrm;
 
 class CRender
 {
 	int tag;
 	CRender();
-	~CRender();
+	virtual ~CRender();
 public:
 	static CRender* createObject();
 	static void destroyObject(CRender* obj);
@@ -117,7 +117,7 @@ public:
 	GLuint buffId_input[DS_CHAN_MAX];
 	cr_osa::OSA_BufHndl m_bufQue[DS_CHAN_MAX];
 	//OSA_MutexHndl *m_cumutex;
-protected:
+public:
 	DS_InitPrm m_initPrm;
 	DS_Render m_renders[DS_RENDER_MAX];
 	int m_curMap[DS_RENDER_MAX];
@@ -125,7 +125,6 @@ protected:
 	int m_maskMap[DS_CHAN_MAX];
 	int m_renderCount;
 	int initRender(bool updateMap = true);
-	GLuint async_display(int chId, int width, int height, int channels);
 
 protected:
 	static void _display(void);
@@ -148,6 +147,7 @@ protected:
 	int gl_init();
 	void gl_uninit();
 	void gl_display();
+	GLuint gl_PBO(int chId, int width, int height, int channels);
 	void gl_updateTexVideo();
 	int gl_updateVertex();
 	int gl_loadProgram();
@@ -164,7 +164,6 @@ private:
 	double m_telapse;
 	uint64  m_tmBak[DS_CHAN_MAX];
 	int64   m_tmRender;
-	bool m_waitSync;
 
 	pthread_mutex_t render_lock;    /**< Used for synchronization. */
 	pthread_cond_t render_cond;     /**< Used for synchronization. */

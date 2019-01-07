@@ -14,6 +14,7 @@
 namespace cr_osd
 {
 extern void put(const wchar_t* share, const cv::Point& pos, const cv::Scalar& color);
+extern void put(const char* share, const cv::Point& pos, const cv::Scalar& color);
 extern void put(const unsigned char* share, const wchar_t* format, const cv::Point& pos, const cv::Scalar& color);
 extern void put(const int* share, const wchar_t* format, const cv::Point& pos, const cv::Scalar& color);
 extern void put(const unsigned int* share, const wchar_t* format, const cv::Point& pos, const cv::Scalar& color);

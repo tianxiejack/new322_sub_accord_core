@@ -20,7 +20,7 @@ static CRender *render = NULL;
 
 static void processFrame_cap(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
 {
-	static uint64 timestamp[MAX_CHAN] = {0ul,0ul};
+	static uint64 timestamp[SYS_CHN_CNT] = {0ul,0ul,};
 	char WindowName[64]={0};
 	char strTmp[64];
 	float fFps = 0.0f;
@@ -30,7 +30,7 @@ static void processFrame_cap(int cap_chid,unsigned char *src, struct v4l2_buffer
 		OSA_printf("ch%d V4L2_BUF_FLAG_ERROR", cap_chid);
 		return;
 	}
-	if(cap_chid>=MAX_CHAN)
+	if(cap_chid>=SYS_CHN_CNT)
 		return;
 
 	uint64 curStamp = (uint64)capInfo.timestamp.tv_sec*1000000000ul + (uint64)capInfo.timestamp.tv_usec*1000ul;
@@ -144,11 +144,11 @@ static int callback_process(void *handle, int chId, Mat frame, struct v4l2_buffe
 		return 0;
 	}*/
 
-	processFrame_cap(chId, frame.data, capInfo, V4L2_PIX_FMT_YUYV);
+	processFrame_cap(chId, frame.data, capInfo, format);
 	return 0;
 }
 
-static void renderCall(int stepIdx, int stepSub, int context)
+static void renderCall(int displayId, int stepIdx, int stepSub, int context)
 {
 	if(stepIdx == CRender::RUN_SWAP){
 		//render->disp_fps();
@@ -164,16 +164,20 @@ int main_cap(int argc, char **argv)
 	render = CRender::createObject();
 	dsInit.bFullScreen = true;
 	dsInit.keyboardfunc = keyboard_event;
-	dsInit.nChannels = SYS_CHN_CNT;
 	dsInit.memType = memtype_cudev;//memtype_glpbo;//memtype_cudev;
 	dsInit.nQueueSize = 6;
-	dsInit.disFPS = DIS_FPS;
-	dsInit.channelsSize[0].w = SYS_CHN_WIDTH(0);
-	dsInit.channelsSize[0].h = SYS_CHN_HEIGHT(0);
-	dsInit.channelsSize[0].c = 3;
-	dsInit.channelsSize[1].w = SYS_CHN_WIDTH(1);
-	dsInit.channelsSize[1].h = SYS_CHN_HEIGHT(1);
-	dsInit.channelsSize[1].c = 3;
+	dsInit.winPosX = 1920;
+	dsInit.winPosY = 0;
+	dsInit.winWidth = SYS_DIS_WIDTH;
+	dsInit.winHeight = SYS_DIS_HEIGHT;
+	dsInit.disFPS = SYS_DIS_FPS;
+	dsInit.nChannels = SYS_CHN_CNT;
+	for(int i=0; i<SYS_CHN_CNT; i++){
+		dsInit.channelInfo[i].w = SYS_CHN_WIDTH(i);
+		dsInit.channelInfo[i].h = SYS_CHN_HEIGHT(i);
+		dsInit.channelInfo[i].c = 3;
+		dsInit.channelInfo[i].fps = SYS_CHN_FPS(i);
+	}
 	dsInit.renderfunc = renderCall;
 	render->create(&dsInit);
 

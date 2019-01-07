@@ -99,26 +99,85 @@ public:
 	}
 };
 
+class DashCross : public cr_osd::Pattern
+{
+	int m_len;
+	int m_crossthickness;
+public:
+	DashCross(const int len=50, const int thickness=2):Pattern(4, GL_LINES),m_crossthickness(thickness),m_len(len){};
+	virtual ~DashCross(void){};
+	void draw(const cv::Point& center, const cv::Scalar& color){
+		std::vector<cv::Point> vpts;
+		cv::Point pt;
+
+		pt.x = center.x;
+		pt.y = center.y-(m_len>>1);
+		vpts.push_back(pt);
+		pt.x = center.x;
+		pt.y = center.y+(m_len>>1);
+		vpts.push_back(pt);
+
+		pt.x = center.x-(m_len>>1);
+		pt.y = center.y;
+		vpts.push_back(pt);
+		pt.x = center.x+(m_len>>1);
+		pt.y = center.y;
+		vpts.push_back(pt);
+
+		update(vpts, color, m_crossthickness);
+	}
+};
+
 static FPS gcnt[SYS_CHN_CNT];
-static OSA_SemHndl semNotify;
 static FPS prcFps;
+static FPS renderFps;
+static std::vector<float> vRdArray;
+static cr_osd::IPattern* patRd = NULL;
+static DashCross *cross0 = NULL;
 static CORE1001_STATS stats;
+static OSA_SemHndl semNotify;
 static wchar_t strSysTimer[64] = L"XXX-XX-XX XX:XX:XX";
-static wchar_t strFov[2][128] = {L"",L""};
-static wchar_t strFPS[2][128] = {L"",L""};
+static wchar_t strFov[SYS_CHN_CNT][128] = {L"",};
+static wchar_t strFPS[SYS_CHN_CNT][128] = {L"",};
+static wchar_t strFPSRender[128] = L"";
 static wchar_t strProFPS[128] = L"";
+
+static bool gbSync = false;
+static cr_osd::IPattern* patCall = NULL;
+static std::vector<float> vArrayCall;
+static int64 tmCall = 0ul;
 
 static void processFrame_core(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
 {
 	if(capInfo.flags & V4L2_BUF_FLAG_ERROR){
-		OSA_printf("ch%d V4L2_BUF_FLAG_ERROR", cap_chid);
+		//OSA_printf("ch%d V4L2_BUF_FLAG_ERROR", cap_chid);
 		return;
 	}
 
 	gcnt[cap_chid].signal();
-	swprintf(strFPS[0], 64, L"ch0 FPS: %.2f (%.2f %.2f)", gcnt[0].cmean,gcnt[0].cmax,gcnt[0].cmin);
-	swprintf(strFPS[1], 64, L"ch1 FPS: %.2f (%.2f %.2f)", gcnt[1].cmean,gcnt[1].cmax,gcnt[1].cmin);
+	swprintf(strFPS[cap_chid], 64, L"ch%d FPS: %.2f (%.2f %.2f)", cap_chid, gcnt[cap_chid].cmean,gcnt[cap_chid].cmax,gcnt[cap_chid].cmin);
 
+	if(cap_chid == 0)
+	{
+		using namespace cr_osd;
+		if(patCall == NULL){
+			tmCall = getTickCount();
+			vArrayCall.resize(300);
+			for(int i=0; i<300; i++)
+				vArrayCall[i] = sin(i*10*0.017453292519943296);
+			patCall = IPattern::Create(&vArrayCall, cv::Rect(0, 200, 600, 200), cv::Scalar(100, 100, 255, 255));
+		}
+
+		if(gbSync)
+		{
+			gbSync = false;
+			int64 tm2 = getTickCount();
+			float interval = float((tm2-tmCall)*0.000000001f);
+			tmCall = tm2;
+			vArrayCall.erase(vArrayCall.begin());
+			vArrayCall.push_back(interval*10.0);
+		}
+	}
 
 	if(core != NULL){
 		/*if(cap_chid == 1){
@@ -529,20 +588,24 @@ static void *thrdhndl_keyevent(void *context)
 static void fontPatterns(void)
 {
 	cr_osd::put(strSysTimer, cv::Point(50,45), cvScalar(255,255,255,255));
-	cr_osd::put(strFov[0], cv::Point(50,45*2), cvScalar(255,255,255,255));
+	//cr_osd::put(strFov[0], cv::Point(50,45*2), cvScalar(255,255,255,255));
+	cr_osd::put(&stats.chn[0].fovId, L"ch0 FOV: %d", cv::Point(50,45*2), cvScalar(255,255,255,255));
 	cr_osd::put(strFov[1], cv::Point(50,45*3), cvScalar(255,255,255,255));
 	cr_osd::put(strFPS[0], cv::Point(50,45*4), cvScalar(255,255,255,255));
 	cr_osd::put(strFPS[1], cv::Point(50,45*5), cvScalar(255,255,255,255));
-	cr_osd::put(strProFPS, cv::Point(50,45*6), cvScalar(255,255,255,255));
-	cr_osd::put(&stats.lossCoastFrames, L"coast = %d", cv::Point(50,45*7), cvScalar(255,255,255,255));
-	cr_osd::put(&chrChId, 2, cv::Point(50, 45*8), cvScalar(255, 0, 0, 255), L"嵌润信息科技 TV", L"自动视频跟踪 FLR");
-	cr_osd::put(&stats.iTrackorStat, 4, cv::Point(50, 45*9), cvScalar(0, 0, 255, 255), L"捕获", L"锁定", L"惯性", L"丢失");
+	cr_osd::put(strFPS[2], cv::Point(50,45*6), cvScalar(255,255,255,255));
+	cr_osd::put(strProFPS, cv::Point(50,45*7), cvScalar(255,255,255,255));
+	cr_osd::put(&stats.lossCoastFrames, L"coast = %d", cv::Point(50,45*8), cvScalar(255,255,255,255));
+	cr_osd::put(strFPSRender, cv::Point(50,45*9), cvScalar(255,255,255,255));
+	cr_osd::put(&chrChId, 2, cv::Point(50, 45*10), cvScalar(255, 0, 0, 255), L"嵌润信息科技 TV", L"自动视频跟踪 FLR");
+	cr_osd::put(&stats.iTrackorStat, 4, cv::Point(50, 45*11), cvScalar(0, 0, 255, 255), L"捕获", L"锁定", L"惯性", L"丢失");
 
-	cr_osd::Line line1;
-	line1.draw(cv::Point(50, 45*9), cv::Point(265, 45*9), cvScalar(255, 0,0,255), 2);
+	static cr_osd::Line line1;
+	line1.draw(cv::Point(50, 45*9), cv::Point(265, 45*9), cvScalar(0, 255,0,255), 2);
 
-	cr_osd::Polygon polygon1(3, GL_LINE_LOOP);
-	cr_osd::Polygon polygon2(3, GL_POLYGON);
+	/*
+	static cr_osd::Polygon polygon1(3, GL_LINE_LOOP);
+	static cr_osd::Polygon polygon2(3, GL_POLYGON);
 	std::vector<cv::Point> vpts;
 	vpts.clear();
 	vpts.push_back(cv::Point(300, 440));
@@ -554,6 +617,7 @@ static void fontPatterns(void)
 	vpts.push_back(cv::Point(300, 440));
 	vpts.push_back(cv::Point(320, 440));
 	polygon2.draw(vpts, cvScalar(255, 0, 0,255), 2);
+	*/
 }
 
 static void *thrdhndl_notify( void * p )
@@ -561,16 +625,15 @@ static void *thrdhndl_notify( void * p )
 #if 1
 	using namespace cr_osd;
 	int64 tm = getTickCount();
-	//static std::vector<float> vArray;
-	static std::vector<float> vArray;
-	vArray.resize(300);
+	std::vector<float> vArrayNotify;
+	vArrayNotify.resize(300);
 	for(int i=0; i<300; i++)
-		vArray[i] = sin(i*10*0.017453292519943296);
-	IPattern* pat = IPattern::Create(&vArray, cv::Rect(0, 0, 600, 200), cv::Scalar(0, 255, 255, 255));
+		vArrayNotify[i] = sin(i*10*0.017453292519943296);
+	IPattern* pat = IPattern::Create(&vArrayNotify, cv::Rect(0, 0, 600, 200), cv::Scalar(0, 255, 255, 255));
 
-		static cv::Mat wave(60, 60, CV_32FC1);
-		static cv::Rect rc(1500, 20, 400, 400);
-		static IPattern* pattern = NULL;
+		cv::Mat wave(60, 60, CV_32FC1);
+		cv::Rect rc(900, 20, 400, 400);
+		IPattern* pattern = NULL;
 		//static int cnt = 0;
 		//cnt ^=1;
 		//wave.setTo(Scalar::all((double)cnt));
@@ -592,13 +655,14 @@ static void *thrdhndl_notify( void * p )
 	{
 		OSA_semWait(&semNotify, OSA_TIMEOUT_FOREVER);
 		memcpy(&stats, &core->m_stats, sizeof(stats));
+		gbSync = true;
 
 		int64 tm2 = getTickCount();
 		float interval = float((tm2-tm)*0.000000001f);
 		tm = tm2;
 		prcFps.signal();
-		vArray.erase(vArray.begin());
-		vArray.push_back(interval*10.0);
+		vArrayNotify.erase(vArrayNotify.begin());
+		vArrayNotify.push_back(interval*10.0);
 		swprintf(strProFPS, 128, L"PRC FPS: %.2f (%.2f %.2f)", prcFps.cmean,prcFps.cmax,prcFps.cmin);
 		swprintf(strFov[0], 64, L"ch0 FOV: %d", stats.chn[0].fovId);
 		swprintf(strFov[1], 64, L"ch1 FOV: %d", stats.chn[1].fovId);
@@ -609,12 +673,11 @@ static void *thrdhndl_notify( void * p )
 }
 static void *thrdhndl_timer( void * p )
 {
-	//cv::Point posTmp;
 	struct timeval timeout;
 	while( *(bool*)p )
 	{
 		timeout.tv_sec = 0;
-		timeout.tv_usec = 100*1000;
+		timeout.tv_usec = 33333.3*0.5;//33333;//15*1000;
 		select( 0, NULL, NULL, NULL, &timeout );
 		struct tm curTmt;
 		time_t curTm;
@@ -623,11 +686,6 @@ static void *thrdhndl_timer( void * p )
 		swprintf(strSysTimer, 64, L"%04d-%02d-%02d %02d:%02d:%02d",
 				curTmt.tm_year+1900, curTmt.tm_mon+1, curTmt.tm_mday,
 				curTmt.tm_hour, curTmt.tm_min, curTmt.tm_sec);
-
-		//swprintf(strProFPS, 128, L"PRC FPS: %.2f (%.2f %.2f)", prcFps.cmean,prcFps.cmax,prcFps.cmin);
-		//posTmp = cv::Point(stats.chn[0].axis.x, stats.chn[0].axis.y);
-		//posTmp = cv::Point(stats.trackPos.x, stats.trackPos.y);
-		//cv::circle(core->m_dc[0], posTmp, 16, cvScalar(255), 2);
 	}
 	return NULL;
 }
@@ -647,8 +705,34 @@ static int encParamTab[][8] = {
 
 static int callback_process(void *handle, int chId, Mat frame, struct v4l2_buffer capInfo, int format)
 {
-	processFrame_core(chId, frame.data, capInfo, V4L2_PIX_FMT_YUYV);
+	processFrame_core(chId, frame.data, capInfo, format);
 	return 0;
+}
+
+static void renderHook(int displayId, int stepIdx, int stepSub, int context)
+{
+	if(stepIdx == RENDER_HOOK_RUN_SWAP){
+		int width = SYS_DIS_WIDTH;
+		int height = SYS_DIS_HEIGHT;
+		static int curStapx = 2, curStapy = 2;
+		static cv::Point curPt(width/2, height/2);
+		curPt += cv::Point(curStapx, curStapy);
+		cross0->draw(curPt, cvScalar(255, 0, 0,255));
+		if(curPt.x>=width-28 || curPt.x<=28)
+			curStapx *=-1;
+		if(curPt.y>=height-28 || curPt.y<=28)
+			curStapy *=-1;
+	}
+	if(stepIdx == RENDER_HOOK_RUN_LEAVE){
+		renderFps.signal();
+		swprintf(strFPSRender, 64, L"RD FPS: %.2f (%.2f %.2f)", renderFps.cmean,renderFps.cmax,renderFps.cmin);
+		static int64 tm = getTickCount();
+		int64 tm2 = getTickCount();
+		float interval = float((tm2-tm)*0.000000001f);
+		tm = tm2;
+		vRdArray.erase(vRdArray.begin());
+		vRdArray.push_back(interval*10.0);
+	}
 }
 
 static CORE1001_INIT_PARAM initParam;
@@ -658,17 +742,15 @@ int main_core(int argc, char **argv)
 {
 	core = (ICore_1001 *)ICore::Qury(COREID_1001);
 	memset(&initParam, 0, sizeof(initParam));
+	initParam.renderSize = cv::Size(SYS_DIS_WIDTH, SYS_DIS_HEIGHT);
+	initParam.renderFPS = SYS_DIS_FPS;
+	initParam.renderSched = 0;
 	initParam.nChannels = SYS_CHN_CNT;
-	initParam.renderFPS = DIS_FPS;
-	initParam.chnInfo[0].imgSize = cv::Size(SYS_CHN_WIDTH(0), SYS_CHN_HEIGHT(0));
-	initParam.chnInfo[0].fps = SYS_CHN_FPS(0);
-	initParam.chnInfo[0].format = V4L2_PIX_FMT_YUYV;
-	initParam.chnInfo[1].imgSize = cv::Size(SYS_CHN_WIDTH(1), SYS_CHN_HEIGHT(1));
-	initParam.chnInfo[1].fps = SYS_CHN_FPS(1);
-	initParam.chnInfo[1].format = V4L2_PIX_FMT_YUYV;
-	initParam.chnInfo[2].imgSize = cv::Size(SYS_CHN_WIDTH(1), SYS_CHN_HEIGHT(1));
-	initParam.chnInfo[2].fps = SYS_CHN_FPS(1);
-	initParam.chnInfo[2].format = V4L2_PIX_FMT_YUYV;
+	for(int i=0; i<SYS_CHN_CNT; i++){
+		initParam.chnInfo[i].imgSize = cv::Size(SYS_CHN_WIDTH(i), SYS_CHN_HEIGHT(i));
+		initParam.chnInfo[i].fps = SYS_CHN_FPS(i);
+		initParam.chnInfo[i].format = SYS_CHN_FMT(i);
+	}
 	initParam.encoderParamTab[0] = encParamTab[0];
 	initParam.encoderParamTab[1] = encParamTab[1];
 	initParam.encoderParamTab[2] = encParamTab[2];
@@ -677,6 +759,7 @@ int main_core(int argc, char **argv)
 	initParam.bHideOSD = false;
 	OSA_semCreate(&semNotify, 1, 0);
 	initParam.notify = &semNotify;
+	initParam.renderHook = renderHook;
 	if(argc>=2){
 		initParam.bEncoder = true;
 		strcpy(strIpAddr, argv[1]);
@@ -694,6 +777,14 @@ int main_core(int argc, char **argv)
 	MultiCh.creat();
 	MultiCh.run();
 
+	{
+	vRdArray.resize(300);
+	for(int i=0; i<300; i++)
+		vRdArray[i] = sin(i*10*0.017453292519943296);
+	patRd = cr_osd::IPattern::Create(&vRdArray, cv::Rect(0, 200, 600, 200), cv::Scalar(255, 0, 0, 255));
+	cross0 = new DashCross;
+	}
+
 	if(initParam.bRender){
 		start_thread(thrdhndl_keyevent, &initParam.bRender);
 		glutKeyboardFunc(keyboard_event);
@@ -706,6 +797,11 @@ int main_core(int argc, char **argv)
 	ICore::Release(core);
 	core = NULL;
 	OSA_semDelete(&semNotify);
+
+	if(patRd != NULL)
+		cr_osd::IPattern::Destroy(patRd);
+	if(cross0 != NULL)
+		delete cross0;
 
 	return 0;
 }

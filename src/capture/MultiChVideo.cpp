@@ -12,10 +12,10 @@
 #include "MultiChVideo.hpp"
 //#include "gpio_rdwr.h"
 
-MultiChVideo::MultiChVideo():m_usrFunc(NULL),m_user(NULL)
+MultiChVideo::MultiChVideo():m_nCap(0),m_usrFunc(NULL),m_user(NULL)
 {
 	memset(m_thrCap, 0, sizeof(m_thrCap));
-	memset(VCap, 0, MAX_CHAN*sizeof(void*));
+	memset(VCap, 0, MultiV_MAX_CHAN*sizeof(void*));
 	memset(m_bufQueue, 0, sizeof(m_bufQueue));
 }
 
@@ -29,18 +29,16 @@ int MultiChVideo::creat()
 {
 	int chId;
 	int ret = OSA_SOK;
-	/*for(int i=0; i<MAX_CHAN; i++){
-		VCap[i] = new v4l2_camera(3);
-		VCap[i]->creat();
-	}*/
-	VCap[0] = new v4l2_camera(0);
-	VCap[0]->creat();
-	VCap[1] = new v4l2_camera(1);
-	VCap[1]->creat();
-	VCap[2] = new v4l2_camera(2);
-	VCap[2]->creat();
+	VCap[m_nCap] = new v4l2_camera(0);
+	VCap[m_nCap++]->creat();
+	VCap[m_nCap] = new v4l2_camera(1);
+	VCap[m_nCap++]->creat();
+	//VCap[m_nCap] = new v4l2_camera(2);
+	//VCap[m_nCap++]->creat();
+	//VCap[m_nCap] = new v4l2_camera(3);
+	//VCap[m_nCap++]->creat();
 
-	for(chId=0; chId<MAX_CHAN; chId++){
+	for(chId=0; chId<m_nCap; chId++){
 		m_bufQueue[chId] = new OSA_BufHndl;
 		OSA_assert(m_bufQueue[chId] != NULL);
 		ret = image_queue_create(m_bufQueue[chId], BUFFER_CNT_PER_CHAN, 0, memtype_null);
@@ -60,7 +58,7 @@ int MultiChVideo::creat()
 
 int MultiChVideo::destroy()
 {
-	for(int chId=0; chId<MAX_CHAN; chId++){
+	for(int chId=0; chId<m_nCap; chId++){
 		if(VCap[chId] != NULL)
 		{
 			stop();
@@ -81,6 +79,7 @@ int MultiChVideo::destroy()
 			}
 		}
 	}
+	m_nCap = 0;
 	return 0;
 }
 
@@ -88,7 +87,7 @@ int MultiChVideo::run()
 {
 	int iRet = 0;
 
-	for(int i=0; i<MAX_CHAN; i++){
+	for(int i=0; i<m_nCap; i++){
 		VCap[i]->run();
 		m_thrCxt[i].pUser = this;
 		m_thrCxt[i].chId = i;
@@ -100,7 +99,7 @@ int MultiChVideo::run()
 
 int MultiChVideo::stop()
 {
-	for(int i=0; i<MAX_CHAN; i++){
+	for(int i=0; i<m_nCap; i++){
 		VCap[i]->stop();
 		OSA_thrDelete(&m_thrCap[i]);
 	}
@@ -111,7 +110,7 @@ int MultiChVideo::stop()
 int MultiChVideo::run(int chId)
 {
 	int iRet;
-	if(chId<0 || chId>=MAX_CHAN)
+	if(chId<0 || chId>=m_nCap)
 		return -1;
 
 	VCap[chId]->run();
@@ -124,7 +123,7 @@ int MultiChVideo::run(int chId)
 
 int MultiChVideo::stop(int chId)
 {
-	if(chId<0 || chId>=MAX_CHAN)
+	if(chId<0 || chId>=m_nCap)
 		return -1;
 
 	OSA_thrDelete(&m_thrCap[chId]);

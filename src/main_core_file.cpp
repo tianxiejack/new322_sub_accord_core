@@ -552,14 +552,14 @@ int main_core_file(int argc, char **argv)
 {
 	core = (ICore_1001 *)ICore::Qury(COREID_1001);
 	memset(&initParam, 0, sizeof(initParam));
+	initParam.renderSize = cv::Size(SYS_DIS_WIDTH, SYS_DIS_HEIGHT);
+	initParam.renderFPS = SYS_DIS_FPS;
 	initParam.nChannels = SYS_CHN_CNT;
-	initParam.renderFPS = DIS_FPS;
-	initParam.chnInfo[0].imgSize = cv::Size(SYS_CHN_WIDTH(0), SYS_CHN_HEIGHT(0));
-	initParam.chnInfo[0].fps = SYS_CHN_FPS(0);
-	initParam.chnInfo[0].format = V4L2_PIX_FMT_YUYV;
-	initParam.chnInfo[1].imgSize = cv::Size(SYS_CHN_WIDTH(1), SYS_CHN_HEIGHT(1));
-	initParam.chnInfo[1].fps = SYS_CHN_FPS(1);
-	initParam.chnInfo[1].format = V4L2_PIX_FMT_YUYV;
+	for(int i=0; i<SYS_CHN_CNT; i++){
+		initParam.chnInfo[i].imgSize = cv::Size(SYS_CHN_WIDTH(i), SYS_CHN_HEIGHT(i));
+		initParam.chnInfo[i].fps = SYS_CHN_FPS(i);
+		initParam.chnInfo[i].format = SYS_CHN_FMT(i);
+	}
 	initParam.encoderParamTab[0] = encParamTab[0];
 	initParam.encoderParamTab[1] = encParamTab[1];
 	initParam.encoderParamTab[2] = encParamTab[2];

@@ -9,12 +9,15 @@
 #define CRCORE_HPP_
 
 /***********************************************
- * core version 1.0.4
+ * core version 1.0.7
+ *
+ * 20/12/2018 motify: CORE1001_INIT_PARAM::renderHook
+ *	enum{	 RUN_ENTER = 0,RUN_WIN,	RUN_SWAP,	RUN_LEAVE };
  */
 #include "osa.h"
 #include "osa_sem.h"
 
-#define CORE_1001_VERSION_  "1.0.5"
+#define CORE_1001_VERSION_  "1.0.7"
 #define COREID_1001			(0x10010000)
 #define COREID_1001_040		(CORNID_1001 + 1)
 
@@ -32,6 +35,7 @@ public:
 #define CORE_TGT_NUM_MAX	(32)
 typedef struct{
 	int valid;
+	int index;
 	cv::Rect Box;
 	cv::Point2f pos;
 }CORE_TGT_INFO;
@@ -43,13 +47,18 @@ typedef struct _core_1001_chn_stats{
 	int iEZoomx;
 	bool enableEncoder;
 	uint64_t frameTimestamp;
+	int blendBindId;
+	cv::Matx44f blendMatric;
 }CORE1001_CHN_STATS;
 
 typedef struct _core_1001_stats{
 	int mainChId;
+	int subChId;
 	bool enableTrack;
 	bool enableMMTD;
 	bool enableMotionDetect;
+	bool enableBlob;
+	bool enableOSD;
 	cv::Size acqWinSize;
 	int iTrackorStat;
 	cv::Point2f trackPos;
@@ -59,6 +68,10 @@ typedef struct _core_1001_stats{
 	CORE_TGT_INFO blob;
 	unsigned int lossCoastFrames;
 	unsigned int lossCoastTelapse;//ms
+	cv::Rect subRc;
+	cv::Matx44f subMatric;
+	int colorYUV;
+	int transLevel;
 }CORE1001_STATS;
 
 typedef struct _core_1001_chnInfo_init{
@@ -70,6 +83,7 @@ typedef struct _core_1001_init{
 	CORE1001_CHN_INIT_PARAM chnInfo[CORE_CHN_MAX];
 	int nChannels;
 	OSA_SemHndl *notify;
+	void (*renderHook)(int displayId, int stepIdx, int stepSub, int context);
 	bool bEncoder;
 	bool bRender;
 	bool bHideOSD;
@@ -80,6 +94,7 @@ typedef struct _core_1001_init{
 	int *encoderParamTab[3];
 	int *encoderParamTabMulti[CORE_CHN_MAX][3];
 }CORE1001_INIT_PARAM;
+enum{	 RENDER_HOOK_RUN_ENTER = 0, RENDER_HOOK_RUN_WIN,	RENDER_HOOK_RUN_SWAP,	RENDER_HOOK_RUN_LEAVE };
 typedef cv::Rect_<float> Rect2f;
 class ICore_1001 : public ICore
 {
@@ -88,7 +103,7 @@ public:
 	virtual int setSubChId(int chId) = 0;
 	virtual int enableTrack(bool enable, cv::Size winSize, bool bFixSize = false) = 0;
 	virtual int enableTrack(bool enable, Rect2f winRect, bool bFixSize = false) = 0;
-	virtual int enableMMTD(bool enable, int nTarget) = 0;
+	virtual int enableMMTD(bool enable, int nTarget, int nSel = 0) = 0;
 	virtual int enableTrackByMMTD(int index, cv::Size *winSize = NULL, bool bFixSize = false) = 0;
 	virtual int enableMotionDetect(bool enable) = 0;
 	virtual int enableEnh(bool enable) = 0;

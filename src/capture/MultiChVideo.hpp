@@ -22,6 +22,7 @@
 #include "v4l2camera_sim.hpp"
 #endif
 
+#define MultiV_MAX_CHAN     (4)
 
 typedef int (* MultiCh_CB)(void *handle, int chId, Mat frame, struct v4l2_buffer capInfo, int format);
 
@@ -49,10 +50,11 @@ public:
 	void *m_user;
 
 private:
-	v4l2_camera *VCap[MAX_CHAN];
-	OSA_ThrHndl m_thrCap[MAX_CHAN];
-	THD_CXT m_thrCxt[MAX_CHAN];
-	OSA_BufHndl *m_bufQueue[MAX_CHAN];
+	int m_nCap;
+	v4l2_camera *VCap[MultiV_MAX_CHAN];
+	OSA_ThrHndl m_thrCap[MultiV_MAX_CHAN];
+	THD_CXT m_thrCxt[MultiV_MAX_CHAN];
+	OSA_BufHndl *m_bufQueue[MultiV_MAX_CHAN];
 	void process(int chId);
 	static void *capThreadFunc(void *context)
 	{
