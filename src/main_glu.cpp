@@ -149,8 +149,6 @@ int main_glu(int argc, char **argv)
 {
 	cuConvertInit(SYS_CHN_CNT);
 
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE);
     VWIND_Prm vwinPrm;
     memset(&vwinPrm, 0, sizeof(vwinPrm));
     vwinPrm.disFPS = SYS_DIS_FPS;

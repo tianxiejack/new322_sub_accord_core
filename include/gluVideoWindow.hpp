@@ -11,8 +11,8 @@
 #include "gluWindow.hpp"
 #include "glvideoRender.hpp"
 
-#define VWIND_RENDER_MAX	(9)
-#define VWIND_CHAN_MAX		(4)
+#define VWIN_RENDER_MAX		(9)
+#define VWIN_CHAN_MAX		(4)
 
 typedef struct _gluVideoWindow_chninfo{
 	int w;
@@ -26,7 +26,7 @@ typedef struct _gluVideoWindow_param{
 	int disFPS;
 	float disSched;
 	char szScriptFile[256];
-	VWIND_ChnInfo channelInfo[VWIND_CHAN_MAX];
+	VWIND_ChnInfo channelInfo[VWIN_CHAN_MAX];
 	int nChannels;
 	int nQueueSize;
 	int memType;
@@ -66,22 +66,22 @@ public:
 	virtual int dynamic_config(VWIN_CFG type, int iPrm, void* pPrm);
 
 	std::vector<CGLVideo *> m_vvideos;
-	cr_osa::OSA_BufHndl *m_bufQue[VWIND_CHAN_MAX];
+	std::vector<CGLVideoBlendRender *> m_vvideoRenders;
+	cr_osa::OSA_BufHndl *m_bufQue[VWIN_CHAN_MAX];
 	VWIND_Prm m_initPrm;
 	int m_nRender;
 public:
-	int m_blendMap[VWIND_CHAN_MAX];
-	int m_maskMap[VWIND_CHAN_MAX];
-	GLMatx44f m_glmat44fBlend[VWIND_CHAN_MAX*VWIND_CHAN_MAX];
-	GLV_BlendPrm m_glBlendPrm[VWIND_CHAN_MAX*VWIND_CHAN_MAX];
+	int m_blendMap[VWIN_CHAN_MAX];
+	int m_maskMap[VWIN_CHAN_MAX];
+	GLMatx44f m_glmat44fBlend[VWIN_CHAN_MAX*VWIN_CHAN_MAX];
+	GLV_BlendPrm m_glBlendPrm[VWIN_CHAN_MAX*VWIN_CHAN_MAX];
 protected:
 	int setFPS(int fps);
 	OSA_MutexHndl m_mutex;
-	std::vector<CGLVideoBlendRender *> vvideoRenders;
 private:
 	uint64  m_interval;
 	double m_telapse;
-	uint64  m_tmBak[VWIND_CHAN_MAX];
+	uint64  m_tmBak[VWIN_CHAN_MAX];
 	int64   m_tmRender;
     int m_nSwapTimeOut;
 	pthread_mutex_t render_lock;    /**< Used for synchronization. */

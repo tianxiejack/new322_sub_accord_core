@@ -21,7 +21,7 @@ class CGLVideo;
 
 class CGLVideoRender
 {
-protected:
+public:
 	GLMatx44f m_matrix;
 	cv::Rect m_viewPort;
 	GLfloat m_vVerts[8];
@@ -48,7 +48,7 @@ public:
 
 class CGLVideoBlendRender : public CGLVideoRender
 {
-protected:
+public:
 	const CGLVideo* m_blend;
 	GLMatx44f m_matrixBlend;
 	GLV_BlendPrm m_blendPrm;
@@ -63,7 +63,7 @@ public:
 
 class CGLVideoMaskBlendRender : public CGLVideoRender
 {
-protected:
+public:
 	const CGLVideo* m_blend;
 	const CGLVideo* m_mask;
 	GLMatx44f m_matrixBlend;

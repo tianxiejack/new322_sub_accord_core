@@ -742,7 +742,7 @@ int main_core(int argc, char **argv)
 {
 	core = (ICore_1001 *)ICore::Qury(COREID_1001);
 	memset(&initParam, 0, sizeof(initParam));
-	initParam.renderSize = cv::Size(SYS_DIS_WIDTH, SYS_DIS_HEIGHT);
+	initParam.renderRC = cv::Rect(1920, 0, SYS_DIS_WIDTH, SYS_DIS_HEIGHT);
 	initParam.renderFPS = SYS_DIS_FPS;
 	initParam.renderSched = 0;
 	initParam.nChannels = SYS_CHN_CNT;
