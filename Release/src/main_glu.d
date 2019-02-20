@@ -257,7 +257,6 @@ src/main_glu.o : ../src/main_glu.cpp \
     /usr/include/c++/5/set \
     /usr/include/c++/5/bits/stl_set.h \
     /usr/include/c++/5/bits/stl_multiset.h \
-    ../include/Displayer.hpp \
     ../src/main.h \
     ../include/cuda_convert.cuh \
     /usr/local/cuda-8.0/bin/../targets/aarch64-linux/include/cuda_runtime.h \
@@ -275,4 +274,8 @@ src/main_glu.o : ../src/main_glu.cpp \
     /usr/local/cuda-8.0/bin/../targets/aarch64-linux/include/cuda_device_runtime_api.h \
     /usr/local/cuda-8.0/bin/../targets/aarch64-linux/include/driver_functions.h \
     /usr/local/cuda-8.0/bin/../targets/aarch64-linux/include/vector_functions.h \
-    /usr/local/cuda-8.0/bin/../targets/aarch64-linux/include/vector_functions.hpp
+    /usr/local/cuda-8.0/bin/../targets/aarch64-linux/include/vector_functions.hpp \
+    ../include/gluVideoWindow.hpp \
+    ../include/gluWindow.hpp \
+    ../include/glvideoRender.hpp \
+    ../include/gluVideoWindowSecondScreen.hpp

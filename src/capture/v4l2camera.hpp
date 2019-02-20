@@ -20,17 +20,6 @@ using namespace cv;
 //#define SHOW_TIMES
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
-
-//#define MAX_CHAN     (3)	// for XGS021
-#define BUFFER_CNT_PER_CHAN	(6)
-#define LARGE_PHOTO_WIDTH  (4096)
-#define LARGE_PHOTO_HEIGHT (3072)
-
-#define CAP_CH_NUM 		(1)
-
-#define IMAGE_WIDTH  	1920		//1440
-#define IMAGE_HEIGHT 	1080	//576
-
 #ifndef V4L2_PIX_FMT_H264
 #define V4L2_PIX_FMT_H264     v4l2_fourcc('H', '2', '6', '4') /* H264 with start codes */
 #endif
@@ -67,7 +56,7 @@ class v4l2_camera
 {
 
 public:
-	v4l2_camera(int devId);
+	v4l2_camera(int devId, int width=1920, int height=1080, int format=V4L2_PIX_FMT_YUYV);
 	~v4l2_camera();
 	bool creat(void);
 	void destroy(void);
@@ -106,8 +95,6 @@ private:
 	unsigned int     n_buffers;
 	unsigned int     bufSize;
 	int							 bufferCount;
-
-	int imgstride;
 	int force_format;
 	int Id;
 

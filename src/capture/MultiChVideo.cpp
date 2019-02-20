@@ -41,7 +41,7 @@ int MultiChVideo::creat()
 	for(chId=0; chId<m_nCap; chId++){
 		m_bufQueue[chId] = new OSA_BufHndl;
 		OSA_assert(m_bufQueue[chId] != NULL);
-		ret = image_queue_create(m_bufQueue[chId], BUFFER_CNT_PER_CHAN, 0, memtype_null);
+		ret = image_queue_create(m_bufQueue[chId], 6, 0, memtype_null);
 		OSA_assert(ret == OSA_SOK);
 		for(int i=0; i<m_bufQueue[chId]->numBuf; i++)
 		{
@@ -198,7 +198,6 @@ void MultiChVideo::process()
 	}
 }*/
 
-static int videoflag = 0;
 void MultiChVideo::process(int chId)
 {
 	fd_set fds;

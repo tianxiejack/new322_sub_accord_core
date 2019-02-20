@@ -19,12 +19,12 @@
 #define SYS_DIS_HEIGHT	(1024)
 #define SYS_DIS_FPS		(60)
 
-static int tWidth[SYS_CHN_CNT] = {1280, 640, 1920, 1920};
-static int tHeight[SYS_CHN_CNT] = {1024, 512, 1080, 1080};
-static int tFPS[SYS_CHN_CNT] = {60, 60, 30, 30};
-static int tFormat[SYS_CHN_CNT] = {V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_GREY, V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_YUYV};
+static int tWidth[SYS_CHN_CNT] = {1920, 1920, 1920, 1920};
+static int tHeight[SYS_CHN_CNT] = {1080, 1080, 1080, 1080};
+static int tFPS[SYS_CHN_CNT] = {30, 30, 30, 30};
+static int tFormat[SYS_CHN_CNT] = {V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_YUYV};
 
-#define M_MAIN main_core
+#define M_MAIN main_glu
 int main_cap(int argc, char **argv);
 int main_core(int argc, char **argv);
 int main_core_file(int argc, char **argv);

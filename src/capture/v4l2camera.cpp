@@ -27,72 +27,19 @@
 #include <cuda_runtime.h>
 #include <malloc.h>
 
-#define INPUT_IMAGE_HEIGHT		(1080)	//)(576)
-#define INPUT_IMAGE_WIDTH		(1920)	//(720)
 #define BUFFER_NUM_MAX			(CAP_CH_NUM*4)
 
-
-v4l2_camera::v4l2_camera(int devId):io(IO_METHOD_USERPTR/*IO_METHOD_MMAP*/),imgwidth(IMAGE_WIDTH),imgstride(IMAGE_WIDTH),
-imgheight(IMAGE_HEIGHT),imgformat(V4L2_PIX_FMT_UYVY),buffers(NULL),memType(MEMORY_NORMAL),bufferCount(BUFFER_CNT_PER_CHAN),
-force_format(1),m_devFd(-1),n_buffers(0),bufSize(INPUT_IMAGE_WIDTH*INPUT_IMAGE_HEIGHT),bRun(false),
-Id(/*devId*/0)
+v4l2_camera::v4l2_camera(int devId, int width, int height, int format)
+:io(IO_METHOD_USERPTR/*IO_METHOD_MMAP*/),imgwidth(width),imgheight(height),imgformat(format),
+ buffers(NULL),memType(MEMORY_LOCKED),bufferCount(6),
+ force_format(1),m_devFd(-1),n_buffers(0),imgtype(CV_8UC2),bufSize(width*height*2),bRun(false),Id(/*devId*/0)
 {
 	sprintf(dev_name, "/dev/video%d",devId);
-	// for axgs021
-	switch(devId){
-		case 0:
-			imgformat 	= V4L2_PIX_FMT_YUYV;
-			imgwidth  	= 1280;
-			imgheight 	= 1024;
-			imgstride 	= imgwidth*2;
-			bufSize 	= imgwidth * imgheight * 2;
-			imgtype     = CV_8UC2;
-			memType = MEMORY_LOCKED;
-			bufferCount = 6;
-			break;
-		case 1:
-			imgformat 	= V4L2_PIX_FMT_GREY;
-			imgwidth  	= 640;
-			imgheight 	= 512;
-			imgstride 	= imgwidth;
-			bufSize 	= imgwidth * imgheight;
-			imgtype     = CV_8UC1;
-			memType = MEMORY_LOCKED;
-			bufferCount = 6;
-			break;
-		case 2:
-			imgformat 	= V4L2_PIX_FMT_YUYV;
-			imgwidth  	= INPUT_IMAGE_WIDTH;
-			imgheight 	= INPUT_IMAGE_HEIGHT;
-			imgstride 	= imgwidth * 2;
-			bufSize 	= imgwidth * imgheight * 2;
-			imgtype     = CV_8UC2;
-			memType = MEMORY_LOCKED;
-			bufferCount = 6;
-			break;
-		case 3:
-			imgformat 	= V4L2_PIX_FMT_YUYV;
-			imgwidth  	= INPUT_IMAGE_WIDTH;
-			imgheight 	= INPUT_IMAGE_HEIGHT;
-			imgstride 	= imgwidth * 2;
-			bufSize 	= imgwidth * imgheight * 2;
-			imgtype     = CV_8UC2;
-			memType = MEMORY_LOCKED;
-			bufferCount = 6;
-			break;
-		case 4:
-			imgformat 	= V4L2_PIX_FMT_GREY;
-			imgwidth  	= INPUT_IMAGE_WIDTH;
-			imgheight 	= INPUT_IMAGE_HEIGHT;
-			imgstride 	= imgwidth;
-			bufSize 	= imgwidth * imgheight;
-			imgtype     = CV_8UC1;
-			memType = MEMORY_LOCKED;
-			bufferCount = 6;
-			break;
-		default:
-			printf("No such device:%s !!\n", dev_name);
-	}
+	if(format == V4L2_PIX_FMT_YUYV || format == V4L2_PIX_FMT_UYVY)
+		imgtype = CV_8UC2;
+	else
+		imgtype = CV_8UC1;
+	bufSize = width*height*CV_MAT_CN(imgtype);
 }
 
 v4l2_camera::~v4l2_camera()

@@ -9,14 +9,14 @@
 #include <freeglut_ext.h>
 #include <linux/videodev2.h>
 #include "MultiChVideo.hpp"
-#include "Displayer.hpp"
 #include "main.h"
 #include "cuda_convert.cuh"
 #include "osa_image_queue.h"
+#include "gluVideoWindow.hpp"
+#include "gluVideoWindowSecondScreen.hpp"
 
 static int curChannel = 0;
 static OSA_BufHndl *imgQ[SYS_CHN_CNT];
-static CRender *render = NULL;
 
 static void processFrame_cap(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
 {
@@ -25,10 +25,10 @@ static void processFrame_cap(int cap_chid,unsigned char *src, struct v4l2_buffer
 
 	Mat img;
 
-	//if(capInfo.flags & V4L2_BUF_FLAG_ERROR){
-	//	OSA_printf("ch%d V4L2_BUF_FLAG_ERROR", cap_chid);
-	//	return;
-	//}
+	if(capInfo.flags & V4L2_BUF_FLAG_ERROR){
+		//OSA_printf("[%d]ch%d V4L2_BUF_FLAG_ERROR", OSA_getCurTimeInMsec(), cap_chid);
+		//return;
+	}
 	if(cap_chid>=SYS_CHN_CNT)
 		return;
 
@@ -104,11 +104,11 @@ static void keyboard_event(unsigned char key, int x, int y)
 	{
 	case '0':
 		curChannel = 0;
-		render->dynamic_config(CRender::DS_CFG_ChId, 0, &curChannel);
+
 		break;
 	case '1':
 		curChannel = 1;
-		render->dynamic_config(CRender::DS_CFG_ChId, 0, &curChannel);
+
 		break;
 	case 'q':
 	case 27:
@@ -142,40 +142,38 @@ static int callback_process(void *handle, int chId, Mat frame, struct v4l2_buffe
 
 static void renderCall(int displayId, int stepIdx, int stepSub, int context)
 {
-	if(stepIdx == CRender::RUN_SWAP){
-		//render->disp_fps();
-	}
+
 }
 
 int main_glu(int argc, char **argv)
 {
 	cuConvertInit(SYS_CHN_CNT);
 
-	DS_InitPrm dsInit;
-	memset(&dsInit, 0, sizeof(DS_InitPrm));
-	render = CRender::createObject();
-	dsInit.bFullScreen = true;
-	dsInit.keyboardfunc = keyboard_event;
-	dsInit.memType = memtype_cudev;//memtype_glpbo;//memtype_cudev;
-	dsInit.nQueueSize = 6;
-	dsInit.winPosX = 1920;
-	dsInit.winPosY = 0;
-	dsInit.winWidth = SYS_DIS_WIDTH;
-	dsInit.winHeight = SYS_DIS_HEIGHT;
-	dsInit.disFPS = SYS_DIS_FPS;
-	dsInit.disSched = 3.5;
-	dsInit.nChannels = SYS_CHN_CNT;
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE);
+    VWIND_Prm vwinPrm;
+    memset(&vwinPrm, 0, sizeof(vwinPrm));
+    vwinPrm.disFPS = SYS_DIS_FPS;
+    vwinPrm.memType = memtype_cudev;
+    vwinPrm.nChannels = SYS_CHN_CNT;
+    vwinPrm.bFullScreen = true;
+    vwinPrm.disSched = 0.35;
 	for(int i=0; i<SYS_CHN_CNT; i++){
-		dsInit.channelInfo[i].w = SYS_CHN_WIDTH(i);
-		dsInit.channelInfo[i].h = SYS_CHN_HEIGHT(i);
-		dsInit.channelInfo[i].c = 3;
-		dsInit.channelInfo[i].fps = SYS_CHN_FPS(i);
+		vwinPrm.channelInfo[i].w = SYS_CHN_WIDTH(i);
+		vwinPrm.channelInfo[i].h = SYS_CHN_HEIGHT(i);
+		vwinPrm.channelInfo[i].c = 3;
+		vwinPrm.channelInfo[i].fps = SYS_CHN_FPS(i);
 	}
-	dsInit.renderfunc = renderCall;
-	render->create(&dsInit);
+	vwinPrm.renderfunc = renderCall;
+	CGluVideoWindow gluWnd(cv::Rect(0, 0, SYS_DIS_WIDTH, SYS_DIS_HEIGHT));
+	gluWnd.Create(vwinPrm);
 
-	imgQ[0] = &render->m_bufQue[0];
-	imgQ[1] = &render->m_bufQue[1];
+	CGluVideoWindowSecond gluWnd2(cv::Rect(1920, 0, SYS_DIS_WIDTH, SYS_DIS_HEIGHT));
+	gluWnd2.Create(vwinPrm);
+
+	for(int chId=0; chId<SYS_CHN_CNT; chId++){
+		imgQ[chId] = gluWnd.m_bufQue[chId];
+	}
 
 	MultiChVideo MultiCh;
 	MultiCh.m_user = NULL;
@@ -186,9 +184,6 @@ int main_glu(int argc, char **argv)
 
 	//glutSetCursor(GLUT_CURSOR_NONE);
 	glutMainLoop();
-
-	render->destroy();
-	CRender::destroyObject(render);
 
 	cuConvertUinit();
 
