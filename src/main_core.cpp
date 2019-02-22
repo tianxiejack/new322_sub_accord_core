@@ -16,6 +16,7 @@
 #include "main.h"
 #include "crCore.hpp"
 #include "crosd.hpp"
+#include "secondScreen.hpp"
 #include "thread.h"
 #include "MultiChVideo.hpp"
 #include "cuda_convert.cuh"
@@ -33,6 +34,7 @@ using namespace cv;
 #define BLANKCOLOR		0x00000000
 
 static ICore_1001 *core = NULL;
+static CSecondScreen *secordScreen = NULL;
 
 void gpuConvertYUYVtoGray(unsigned char *src, unsigned char *dst,
 		unsigned int width, unsigned int height);
@@ -712,8 +714,8 @@ static int callback_process(void *handle, int chId, Mat frame, struct v4l2_buffe
 static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 {
 	if(stepIdx == RENDER_HOOK_RUN_SWAP){
-		int width = SYS_DIS_WIDTH;
-		int height = SYS_DIS_HEIGHT;
+		int width = SYS_DIS0_WIDTH;
+		int height = SYS_DIS0_HEIGHT;
 		static int curStapx = 2, curStapy = 2;
 		static cv::Point curPt(width/2, height/2);
 		curPt += cv::Point(curStapx, curStapy);
@@ -742,8 +744,8 @@ int main_core(int argc, char **argv)
 {
 	core = (ICore_1001 *)ICore::Qury(COREID_1001);
 	memset(&initParam, 0, sizeof(initParam));
-	initParam.renderRC = cv::Rect(1920, 0, SYS_DIS_WIDTH, SYS_DIS_HEIGHT);
-	initParam.renderFPS = SYS_DIS_FPS;
+	initParam.renderRC = cv::Rect(SYS_DIS0_X, SYS_DIS0_Y, SYS_DIS0_WIDTH, SYS_DIS0_HEIGHT);
+	initParam.renderFPS = SYS_DIS0_FPS;
 	initParam.renderSched = 0;
 	initParam.nChannels = SYS_CHN_CNT;
 	for(int i=0; i<SYS_CHN_CNT; i++){
@@ -766,6 +768,11 @@ int main_core(int argc, char **argv)
 	}
 	initParam.encStreamIpaddr = strIpAddr;
 	core->init(&initParam, sizeof(initParam));
+
+#ifdef SYS_DIS1
+	secordScreen = new CSecondScreen(cv::Rect(SYS_DIS1_X, SYS_DIS1_Y, SYS_DIS1_WIDTH, SYS_DIS1_HEIGHT), SYS_DIS1_FPS);
+#endif
+
 	start_thread(thrdhndl_timer, &bLoop);
 	start_thread(thrdhndl_notify, &bLoop);
 
@@ -793,9 +800,14 @@ int main_core(int argc, char **argv)
 		thrdhndl_keyevent(&initParam.bRender);
 	}
 	bLoop = false;
+
+	if(secordScreen != NULL)
+		delete secordScreen;
+
 	core->uninit();
 	ICore::Release(core);
 	core = NULL;
+
 	OSA_semDelete(&semNotify);
 
 	if(patRd != NULL)

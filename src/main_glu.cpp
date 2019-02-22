@@ -151,7 +151,7 @@ int main_glu(int argc, char **argv)
 
     VWIND_Prm vwinPrm;
     memset(&vwinPrm, 0, sizeof(vwinPrm));
-    vwinPrm.disFPS = SYS_DIS_FPS;
+    vwinPrm.disFPS = SYS_DIS0_FPS;
     vwinPrm.memType = memtype_cudev;
     vwinPrm.nChannels = SYS_CHN_CNT;
     vwinPrm.bFullScreen = true;
@@ -163,11 +163,14 @@ int main_glu(int argc, char **argv)
 		vwinPrm.channelInfo[i].fps = SYS_CHN_FPS(i);
 	}
 	vwinPrm.renderfunc = renderCall;
-	CGluVideoWindow gluWnd(cv::Rect(0, 0, SYS_DIS_WIDTH, SYS_DIS_HEIGHT));
+	CGluVideoWindow gluWnd(cv::Rect(SYS_DIS0_X, SYS_DIS0_Y, SYS_DIS0_WIDTH, SYS_DIS0_HEIGHT));
 	gluWnd.Create(vwinPrm);
 
-	CGluVideoWindowSecond gluWnd2(cv::Rect(1920, 0, SYS_DIS_WIDTH, SYS_DIS_HEIGHT));
+#ifdef SYS_DIS1
+	vwinPrm.disFPS = SYS_DIS1_FPS;
+	CGluVideoWindowSecond gluWnd2(cv::Rect(SYS_DIS1_X, SYS_DIS1_Y, SYS_DIS1_WIDTH, SYS_DIS1_HEIGHT));
 	gluWnd2.Create(vwinPrm);
+#endif
 
 	for(int chId=0; chId<SYS_CHN_CNT; chId++){
 		imgQ[chId] = gluWnd.m_bufQue[chId];

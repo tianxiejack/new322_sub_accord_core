@@ -166,11 +166,11 @@ int main_cap(int argc, char **argv)
 	dsInit.keyboardfunc = keyboard_event;
 	dsInit.memType = memtype_cudev;//memtype_glpbo;//memtype_cudev;
 	dsInit.nQueueSize = 6;
-	dsInit.winPosX = 1920;
-	dsInit.winPosY = 0;
-	dsInit.winWidth = SYS_DIS_WIDTH;
-	dsInit.winHeight = SYS_DIS_HEIGHT;
-	dsInit.disFPS = SYS_DIS_FPS;
+	dsInit.winPosX = SYS_DIS0_X;
+	dsInit.winPosY = SYS_DIS0_Y;
+	dsInit.winWidth = SYS_DIS0_WIDTH;
+	dsInit.winHeight = SYS_DIS0_HEIGHT;
+	dsInit.disFPS = SYS_DIS0_FPS;
 	dsInit.nChannels = SYS_CHN_CNT;
 	for(int i=0; i<SYS_CHN_CNT; i++){
 		dsInit.channelInfo[i].w = SYS_CHN_WIDTH(i);

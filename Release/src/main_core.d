@@ -298,6 +298,8 @@ src/main_core.o : ../src/main_core.cpp \
     ../src/main.h \
     ../include/crCore.hpp \
     ../include/crosd.hpp \
+    ../src/secondScreen.hpp \
+    ../include/crcoreSecondScreen.hpp \
     ../src/capture/thread.h \
     ../src/capture/MultiChVideo.hpp \
     ../include/osa/osa_thr.h \

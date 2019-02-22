@@ -552,8 +552,8 @@ int main_core_file(int argc, char **argv)
 {
 	core = (ICore_1001 *)ICore::Qury(COREID_1001);
 	memset(&initParam, 0, sizeof(initParam));
-	initParam.renderRC = cv::Rect(0, 0, SYS_DIS_WIDTH, SYS_DIS_HEIGHT);
-	initParam.renderFPS = SYS_DIS_FPS;
+	initParam.renderRC = cv::Rect(SYS_DIS0_X, SYS_DIS0_Y, SYS_DIS0_WIDTH, SYS_DIS0_HEIGHT);
+	initParam.renderFPS = SYS_DIS0_FPS;
 	initParam.nChannels = SYS_CHN_CNT;
 	for(int i=0; i<SYS_CHN_CNT; i++){
 		initParam.chnInfo[i].imgSize = cv::Size(SYS_CHN_WIDTH(i), SYS_CHN_HEIGHT(i));

@@ -9,7 +9,7 @@
 #define CRCORE_HPP_
 
 /***********************************************
- * core version 1.0.9
+ * core version 1.0.10
  *
  * 20/12/2018 motify: CORE1001_INIT_PARAM::renderHook
  *	enum{	 RUN_ENTER = 0,RUN_WIN,	RUN_SWAP,	RUN_LEAVE };
@@ -19,13 +19,14 @@
 #include "osa.h"
 #include "osa_sem.h"
 
-#define CORE_1001_VERSION_  "1.0.9"
+#define CORE_1001_VERSION_  "1.0.10"
+
 #define COREID_1001			(0x10010000)
-#define COREID_1001_040		(CORNID_1001 + 1)
 
 class ICore
 {
 public:
+	int coreId;
 	static ICore* Qury(int coreID=COREID_1001);
 	static void Release(ICore* core);
 	virtual int init(void *pParam, int paramSize) = 0;
@@ -124,13 +125,12 @@ public:
 	virtual int setWinPos(int winId, const cv::Rect& rc) = 0;//! (0,0):(left,bottom)
 	virtual int setWinMatric(int winId, const cv::Matx44f& matric) = 0;
 	virtual int setOSDColor(int yuv, int thickness = 2) = 0;
-	virtual int setOSD(cv::Scalar color, int thickness = 2) = 0;
+	virtual int setOSDColor(cv::Scalar color, int thickness = 2) = 0;
 	virtual int setEncTransLevel(int iLevel) = 0;
 	virtual int setHideSysOsd(bool bHideOSD) = 0;
 
 	CORE1001_STATS m_stats;
 	cv::Mat m_dc[CORE_CHN_MAX];
 };
-
 
 #endif /* CRCORN_HPP_ */

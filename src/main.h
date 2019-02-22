@@ -15,9 +15,21 @@
 #define SYS_CHN_HEIGHT(chn)		tHeight[chn]
 #define SYS_CHN_FPS(chn)		tFPS[chn]
 #define SYS_CHN_FMT(chn)		tFormat[chn]
-#define SYS_DIS_WIDTH	(1440)
-#define SYS_DIS_HEIGHT	(900)
-#define SYS_DIS_FPS		(60)
+
+#define SYS_DIS0_FPS	(60)
+#define SYS_DIS0_X		(0)
+#define SYS_DIS0_Y		(0)
+#define SYS_DIS0_WIDTH	(1920)
+#define SYS_DIS0_HEIGHT	(1080)
+
+#define SYS_DIS1
+#ifdef SYS_DIS1
+#	define SYS_DIS1_FPS		(60)
+#	define SYS_DIS1_X		(SYS_DIS0_WIDTH)
+#	define SYS_DIS1_Y		(0)
+#	define SYS_DIS1_WIDTH	(1440)
+#	define SYS_DIS1_HEIGHT	(900)
+#endif
 
 static int tWidth[SYS_CHN_CNT] = {1920, 1920, 1920, 1920};
 static int tHeight[SYS_CHN_CNT] = {1080, 1080, 1080, 1080};

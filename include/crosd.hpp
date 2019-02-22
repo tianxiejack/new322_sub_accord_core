@@ -13,6 +13,7 @@
 
 namespace cr_osd
 {
+extern void bind(int index = -1);
 extern void put(const wchar_t* share, const cv::Point& pos, const cv::Scalar& color);
 extern void put(const char* share, const cv::Point& pos, const cv::Scalar& color);
 extern void put(const unsigned char* share, const wchar_t* format, const cv::Point& pos, const cv::Scalar& color);
@@ -42,7 +43,7 @@ class Pattern
 {
 	std::vector<void *> vbases;
 protected:
-	Pattern(int nVert, GLenum primitive = GL_LINES);
+	Pattern(int nVert, GLenum primitive = GL_LINES, int bindId = -1);
 	virtual ~Pattern(void);
 	virtual int update(const std::vector<cv::Point>& vpts, const cv::Scalar& color = cv::Scalar::all(255), int thickness = 1);
 public:
