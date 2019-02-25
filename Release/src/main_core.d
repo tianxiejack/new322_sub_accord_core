@@ -298,6 +298,13 @@ src/main_core.o : ../src/main_core.cpp \
     ../src/main.h \
     ../include/crCore.hpp \
     ../include/crosd.hpp \
+    ../include/GLBatchMini.h \
+    ../include/math3d.h \
+    ../include/GLFrustum.h \
+    ../include/GLFrame.h \
+    ../include/GLMatrixStack.h \
+    ../include/GLGeometryTransform.h \
+    ../include/GLShaderManagerMini.h \
     ../src/secondScreen.hpp \
     ../include/crcoreSecondScreen.hpp \
     ../src/capture/thread.h \

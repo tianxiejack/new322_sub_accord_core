@@ -724,6 +724,11 @@ static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 			curStapx *=-1;
 		if(curPt.y>=height-28 || curPt.y<=28)
 			curStapy *=-1;
+
+		glColor3f(1.0, 0.0, 0.0);
+		glViewport(0, 0, 500, 500);
+		glRasterPos2f(200, 200);
+		glutBitmapCharacter(GLUT_BITMAP_8_BY_13, 'c');
 	}
 	if(stepIdx == RENDER_HOOK_RUN_LEAVE){
 		renderFps.signal();

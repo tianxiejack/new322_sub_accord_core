@@ -11,8 +11,16 @@
 #include <opencv2/opencv.hpp>
 #include <glew.h>
 
+#include <GLBatchMini.h>
+#include <GLFrustum.h>
+#include <GLFrame.h>
+#include <GLMatrixStack.h>
+#include <GLGeometryTransform.h>
+#include <GLShaderManagerMini.h>
+
 namespace cr_osd
 {
+extern GLShaderManagerMini		glShaderManager;
 extern void bind(int index = -1);
 extern void put(const wchar_t* share, const cv::Point& pos, const cv::Scalar& color);
 extern void put(const char* share, const cv::Point& pos, const cv::Scalar& color);
