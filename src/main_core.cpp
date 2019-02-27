@@ -713,6 +713,7 @@ static int callback_process(void *handle, int chId, Mat frame, struct v4l2_buffe
 
 static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 {
+	//OSA_printf("%s %d displayId = %d", __FILE__, __LINE__, displayId);
 	if(stepIdx == RENDER_HOOK_RUN_SWAP){
 		int width = SYS_DIS0_WIDTH;
 		int height = SYS_DIS0_HEIGHT;
@@ -725,9 +726,9 @@ static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 		if(curPt.y>=height-28 || curPt.y<=28)
 			curStapy *=-1;
 
-		glColor3f(1.0, 0.0, 0.0);
+		glColor3f(1.0, 1.0, 1.0);
 		glViewport(0, 0, 500, 500);
-		glRasterPos2f(200, 200);
+		glRasterPos2f(0.3, 0.3);
 		glutBitmapCharacter(GLUT_BITMAP_8_BY_13, 'c');
 	}
 	if(stepIdx == RENDER_HOOK_RUN_LEAVE){

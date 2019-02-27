@@ -9,17 +9,18 @@
 #define CRCORE_HPP_
 
 /***********************************************
- * core version 1.0.10
+ * core version 1.0.11
  *
  * 20/12/2018 motify: CORE1001_INIT_PARAM::renderHook
  *	enum{	 RUN_ENTER = 0,RUN_WIN,	RUN_SWAP,	RUN_LEAVE };
  * 11/01/2019 motify: int ICore_1001::setHideSysOsd(bool bHideOSD)
  * 20/02/2019 motify: cv::Rect renderRC;
+ * 26/02/2019 motify: CORE1001_INIT_PARAM2
  */
 #include "osa.h"
 #include "osa_sem.h"
 
-#define CORE_1001_VERSION_  "1.0.10"
+#define CORE_1001_VERSION_  "1.0.11"
 
 #define COREID_1001			(0x10010000)
 
@@ -97,8 +98,23 @@ typedef struct _core_1001_init{
 	int *encoderParamTab[3];
 	int *encoderParamTabMulti[CORE_CHN_MAX][3];
 }CORE1001_INIT_PARAM;
+
+class CGluVideoWindow;
+typedef struct _core_1001_init2{
+	CORE1001_CHN_INIT_PARAM chnInfo[CORE_CHN_MAX];
+	int nChannels;
+	OSA_SemHndl *notify;
+	bool bEncoder;
+	bool bHideOSD;
+	char *encStreamIpaddr;
+	int *encoderParamTab[3];
+	int *encoderParamTabMulti[CORE_CHN_MAX][3];
+	CGluVideoWindow *videoWindow;
+}CORE1001_INIT_PARAM2;
+
 enum{	 RENDER_HOOK_RUN_ENTER = 0, RENDER_HOOK_RUN_WIN,	RENDER_HOOK_RUN_SWAP,	RENDER_HOOK_RUN_LEAVE };
 typedef cv::Rect_<float> Rect2f;
+
 class ICore_1001 : public ICore
 {
 public:

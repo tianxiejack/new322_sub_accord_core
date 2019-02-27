@@ -9,6 +9,7 @@
 #define SECONDSCREEN_HPP_
 
 #include "crcoreSecondScreen.hpp"
+#include "crosd.hpp"
 
 class CT
 {
@@ -19,11 +20,22 @@ public:
 class CSecondScreen : public CSecondScreenBase
 {
 	CT m_ct;
+	cr_osd::Line *m_line;
 	cv::Rect m_rc;
+	char m_txt[256];
 public:
 	CSecondScreen(const cv::Rect& rc, int fps, int fontSize = 45, const char* fontFile = NULL):
-		CSecondScreenBase(rc, fps, true, fontSize, fontFile),m_rc(rc){};
-	virtual ~CSecondScreen(){};
+		CSecondScreenBase(rc, fps, true, fontSize, fontFile),m_rc(rc){
+		m_line = new cr_osd::Line(1);
+		m_line->draw(cv::Point(500, 855), cv::Point(1400, 855), cv::Scalar(255,255,0,255), 1);
+		sprintf(m_txt, "abcdefghijklmnopqrstuvwxyz1234567890 :,.!?|{}[]()");
+		cr_osd::bind(1);
+		cr_osd::put(m_txt, cv::Point(500, 840), cv::Scalar(255,255,0,255));
+		cr_osd::bind(-1);
+	};
+	virtual ~CSecondScreen(){
+		delete m_line;
+	};
 	void disp_fps(){
 	    static GLint frames = 0;
 	    static GLint t0 = 0;
@@ -46,14 +58,14 @@ public:
 	virtual void OnRender(int stepIdx, int stepSub, int context)
 	{
 		if(stepIdx == RENDER_HOOK_RUN_SWAP){
-			glUseProgram(0);
+			//glUseProgram(0);
 			//M3DVector4f vcolor = {1.0,1.0,1.0,1.0};
 			//cr_osd::glShaderManager.UseStockShader(GLT_SHADER_IDENTITY, vcolor);
-			//glClear(GL_COLOR_BUFFER_BIT);
+
+			glColor3f(0.0, 1.0, 0.0);
 			glViewport(0, 0, m_rc.width, m_rc.height);
 			glRasterPos2f(0.0, 0.0);
-			glColor4f(0.0, 1.0, 1.0, 1.0f);
-			char  str[20] = "0123456789";
+			char  str[32] = "0123456789asdf";
 			glutBitmapString(GLUT_BITMAP_8_BY_13, (unsigned char *)str);
 		}
 	}

@@ -62,7 +62,7 @@ public:
 class Line : public Pattern
 {
 public:
-	Line(void):Pattern(2, GL_LINES){};
+	Line(int bindId = -1):Pattern(2, GL_LINES, bindId){};
 	virtual ~Line(void){};
 	void draw(const cv::Point& pt1, const cv::Point& pt2, const cv::Scalar& color, int thickness=1){
 		std::vector<cv::Point> vpts;
@@ -75,7 +75,7 @@ public:
 class Polygon : public Pattern
 {
 public:
-	Polygon(int nPts = 3, GLenum primitive = GL_POLYGON):Pattern(nPts, primitive){};
+	Polygon(int nPts = 3, GLenum primitive = GL_POLYGON, int bindId = -1):Pattern(nPts, primitive, bindId){};
 	virtual ~Polygon(void){};
 	void draw(const std::vector<cv::Point>& vpts, const cv::Scalar& color, int thickness=1){
 		update(vpts, color, thickness);
