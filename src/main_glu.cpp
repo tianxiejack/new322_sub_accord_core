@@ -27,7 +27,7 @@ static void processFrame_cap(int cap_chid,unsigned char *src, struct v4l2_buffer
 
 	if(capInfo.flags & V4L2_BUF_FLAG_ERROR){
 		//OSA_printf("[%d]ch%d V4L2_BUF_FLAG_ERROR", OSA_getCurTimeInMsec(), cap_chid);
-		//return;
+		return;
 	}
 	if(cap_chid>=SYS_CHN_CNT)
 		return;
