@@ -726,10 +726,13 @@ static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 		if(curPt.y>=height-28 || curPt.y<=28)
 			curStapy *=-1;
 
-		glColor3f(1.0, 1.0, 1.0);
-		glViewport(0, 0, 500, 500);
+		//glUseProgram(0);
+		glColor3f(0.0, 1.0, 0.0);
+		glViewport(0, 0, width, height);
 		glRasterPos2f(0.3, 0.3);
-		glutBitmapCharacter(GLUT_BITMAP_8_BY_13, 'c');
+		//glutBitmapCharacter(GLUT_BITMAP_8_BY_13, 'c');
+		char  str[32] = "0123456789asdf";
+		glutBitmapString(GLUT_BITMAP_8_BY_13, (unsigned char *)str);
 	}
 	if(stepIdx == RENDER_HOOK_RUN_LEAVE){
 		renderFps.signal();
@@ -740,6 +743,11 @@ static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 		tm = tm2;
 		vRdArray.erase(vRdArray.begin());
 		vRdArray.push_back(interval*10.0);
+
+		struct timespec now;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		uint64_t us = now.tv_sec*1000000ULL+now.tv_nsec/1000;
+		//OSA_printf("[%ld] %ld.%ld %s Render leave", us, now.tv_sec, now.tv_nsec, __func__);
 	}
 }
 

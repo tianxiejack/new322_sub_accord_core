@@ -16,13 +16,13 @@
 #define SYS_CHN_FPS(chn)		tFPS[chn]
 #define SYS_CHN_FMT(chn)		tFormat[chn]
 
-#define SYS_DIS0_FPS	(60)
-#define SYS_DIS0_X		(0)
+#define SYS_DIS0_FPS	(30)
+#define SYS_DIS0_X		(1920)
 #define SYS_DIS0_Y		(0)
-#define SYS_DIS0_WIDTH	(1920)
-#define SYS_DIS0_HEIGHT	(1080)
+#define SYS_DIS0_WIDTH	(1440)
+#define SYS_DIS0_HEIGHT	(900)
 
-#define SYS_DIS1
+#undef SYS_DIS1
 #ifdef SYS_DIS1
 #	define SYS_DIS1_FPS		(60)
 #	define SYS_DIS1_X		(SYS_DIS0_WIDTH)

@@ -5,6 +5,6 @@ ch01_font_filename: "/usr/share/fonts/truetype/liberation/LiberationSans-Regular
 ch01_font_size: 40
 ;;Front_font_filename: "/usr/share/fonts/truetype/abyssinica/simsun.ttc"
 Front_font_filename: "/usr/share/fonts/truetype/abyssinica/AbyssinicaSIL-R.ttf"
-Front_font_size: 45
+Front_font_size: 40
 
 
