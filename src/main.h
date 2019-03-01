@@ -16,7 +16,7 @@
 #define SYS_CHN_FPS(chn)		tFPS[chn]
 #define SYS_CHN_FMT(chn)		tFormat[chn]
 
-#define SYS_DIS0_FPS	(30)
+#define SYS_DIS0_FPS	(50)
 #define SYS_DIS0_X		(0)
 #define SYS_DIS0_Y		(0)
 #define SYS_DIS0_WIDTH	(1920)
@@ -33,13 +33,14 @@
 
 static int tWidth[SYS_CHN_CNT] = {1920, 1920, 1920, 1920};
 static int tHeight[SYS_CHN_CNT] = {1080, 1080, 1080, 1080};
-static int tFPS[SYS_CHN_CNT] = {30, 30, 30, 30};
+static int tFPS[SYS_CHN_CNT] = {25, 30, 30, 30};
 static int tFormat[SYS_CHN_CNT] = {V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_YUYV, V4L2_PIX_FMT_YUYV};
 
-#define M_MAIN main_core
+#define M_MAIN main_test
 int main_cap(int argc, char **argv);
 int main_core(int argc, char **argv);
 int main_core_file(int argc, char **argv);
 int main_glu(int argc, char **argv);
+int main_test(int argc, char **argv);
 
 #endif /* MAIN_H_ */

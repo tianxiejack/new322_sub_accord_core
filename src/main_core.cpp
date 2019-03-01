@@ -720,7 +720,7 @@ static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 		static int curStapx = 2, curStapy = 2;
 		static cv::Point curPt(width/2, height/2);
 		curPt += cv::Point(curStapx, curStapy);
-		cross0->draw(curPt, cvScalar(255, 0, 0,255));
+		//cross0->draw(curPt, cvScalar(255, 0, 0,255));
 		if(curPt.x>=width-28 || curPt.x<=28)
 			curStapx *=-1;
 		if(curPt.y>=height-28 || curPt.y<=28)
@@ -731,8 +731,8 @@ static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 		glViewport(0, 0, width, height);
 		glRasterPos2f(0.3, 0.3);
 		//glutBitmapCharacter(GLUT_BITMAP_8_BY_13, 'c');
-		char  str[32] = "0123456789asdf";
-		glutBitmapString(GLUT_BITMAP_8_BY_13, (unsigned char *)str);
+		//char  str[32] = "0123456789asdf";
+		//glutBitmapString(GLUT_BITMAP_8_BY_13, (unsigned char *)str);
 	}
 	if(stepIdx == RENDER_HOOK_RUN_LEAVE){
 		renderFps.signal();
@@ -741,8 +741,8 @@ static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 		int64 tm2 = getTickCount();
 		float interval = float((tm2-tm)*0.000000001f);
 		tm = tm2;
-		vRdArray.erase(vRdArray.begin());
-		vRdArray.push_back(interval*10.0);
+		//vRdArray.erase(vRdArray.begin());
+		//vRdArray.push_back(interval*10.0);
 
 		struct timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);
@@ -753,7 +753,7 @@ static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 
 static CORE1001_INIT_PARAM initParam;
 static bool bLoop = true;
-static char strIpAddr[32] = "192.168.1.88";
+static char strIpAddr[32] = "192.168.0.172";
 int main_core(int argc, char **argv)
 {
 	core = (ICore_1001 *)ICore::Qury(COREID_1001);
@@ -787,10 +787,10 @@ int main_core(int argc, char **argv)
 	secordScreen = new CSecondScreen(cv::Rect(SYS_DIS1_X, SYS_DIS1_Y, SYS_DIS1_WIDTH, SYS_DIS1_HEIGHT), SYS_DIS1_FPS);
 #endif
 
-	start_thread(thrdhndl_timer, &bLoop);
-	start_thread(thrdhndl_notify, &bLoop);
+	//start_thread(thrdhndl_timer, &bLoop);
+	//start_thread(thrdhndl_notify, &bLoop);
 
-	fontPatterns();
+	//fontPatterns();
 
 	MultiChVideo MultiCh;
 	MultiCh.m_user = NULL;
@@ -798,11 +798,12 @@ int main_core(int argc, char **argv)
 	MultiCh.creat();
 	MultiCh.run();
 
+	if(1)
 	{
-	vRdArray.resize(300);
-	for(int i=0; i<300; i++)
-		vRdArray[i] = sin(i*10*0.017453292519943296);
-	patRd = cr_osd::IPattern::Create(&vRdArray, cv::Rect(0, 200, 600, 200), cv::Scalar(255, 0, 0, 255));
+	//vRdArray.resize(300);
+	//for(int i=0; i<300; i++)
+		//vRdArray[i] = sin(i*10*0.017453292519943296);
+	//patRd = cr_osd::IPattern::Create(&vRdArray, cv::Rect(0, 200, 600, 200), cv::Scalar(255, 0, 0, 255));
 	cross0 = new DashCross;
 	}
 
