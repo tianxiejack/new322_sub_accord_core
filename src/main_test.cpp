@@ -22,7 +22,55 @@
 #include "MultiChVideo.hpp"
 #include "cuda_convert.cuh"
 
+#include "encTrans.hpp"
+
+static int defaultEncParamTab0[CORE_CHN_MAX*3][8] = {
+	//bitrate; minQP; maxQP;minQI;maxQI;minQB;maxQB;
+	{1400000,  -1,    -1,   -1,   -1,   -1,   -1, },//2M
+	{2800000,  -1,    -1,   -1,   -1,   -1,   -1, },//4M
+	{5600000,  -1,    -1,   -1,   -1,   -1,   -1, }, //8M
+	//bitrate; minQP; maxQP;minQI;maxQI;minQB;maxQB;
+	{1400000,  -1,    -1,   -1,   -1,   -1,   -1, },//2M
+	{2800000,  -1,    -1,   -1,   -1,   -1,   -1, },//4M
+	{5600000,  -1,    -1,   -1,   -1,   -1,   -1, }, //8M
+	//bitrate; minQP; maxQP;minQI;maxQI;minQB;maxQB;
+	{1400000,  -1,    -1,   -1,   -1,   -1,   -1, },//2M
+	{2800000,  -1,    -1,   -1,   -1,   -1,   -1, },//4M
+	{5600000,  -1,    -1,   -1,   -1,   -1,   -1, }, //8M
+	//bitrate; minQP; maxQP;minQI;maxQI;minQB;maxQB;
+	{1400000,  -1,    -1,   -1,   -1,   -1,   -1, },//2M
+	{2800000,  -1,    -1,   -1,   -1,   -1,   -1, },//4M
+	{5600000,  -1,    -1,   -1,   -1,   -1,   -1, } //8M
+};
+static int defaultEncParamTab1[CORE_CHN_MAX*3][8] = {
+	//bitrate; minQP; maxQP;minQI;maxQI;minQB;maxQB;
+	{700000,  -1,    -1,   -1,   -1,   -1,   -1, },//2M
+	{1400000,  -1,    -1,   -1,   -1,   -1,   -1, },//4M
+	{2800000,  -1,    -1,   -1,   -1,   -1,   -1, }, //8M
+	//bitrate; minQP; maxQP;minQI;maxQI;minQB;maxQB;
+	{700000,  -1,    -1,   -1,   -1,   -1,   -1, },//2M
+	{1400000,  -1,    -1,   -1,   -1,   -1,   -1, },//4M
+	{2800000,  -1,    -1,   -1,   -1,   -1,   -1, }, //8M
+	//bitrate; minQP; maxQP;minQI;maxQI;minQB;maxQB;
+	{700000,  -1,    -1,   -1,   -1,   -1,   -1, },//2M
+	{1400000,  -1,    -1,   -1,   -1,   -1,   -1, },//4M
+	{2800000,  -1,    -1,   -1,   -1,   -1,   -1, }, //8M
+	//bitrate; minQP; maxQP;minQI;maxQI;minQB;maxQB;
+	{700000,  -1,    -1,   -1,   -1,   -1,   -1, },//2M
+	{1400000,  -1,    -1,   -1,   -1,   -1,   -1, },//4M
+	{2800000,  -1,    -1,   -1,   -1,   -1,   -1, } //8M
+};
+
+CEnc2Rtp* enctran;
+
+static cv::Size channelsImgSize[CORE_CHN_MAX];
+
+static int *userEncParamTab0[CORE_CHN_MAX][3];
+static int *userEncParamTab1[CORE_CHN_MAX][3];
+
 static	ICore_1001 *core = NULL;
+
+static char strIpAddr[32] = "192.168.0.172";
 
 static void processFrame_core(int cap_chid,unsigned char *src, struct v4l2_buffer capInfo, int format)
 {
@@ -59,6 +107,18 @@ static void renderHook(int displayId, int stepIdx, int stepSub, int context)
 	}
 }
 
+
+static __inline__ int* getEncParamTab(int chId, int level)
+{
+	int nEnc = 0;
+	//for(int i = 0; i < nValidChannels; i++)
+	//	nEnc += enableEncoderFlag[i];
+	//if(nEnc>1)
+	return userEncParamTab1[chId][level];
+	//return userEncParamTab0[chId][level];
+}
+
+
 int main_test(int argc, char **argv)
 {
 
@@ -78,7 +138,57 @@ int main_test(int argc, char **argv)
 	initParam.bEncoder = false;
 	initParam.bHideOSD = false;
 	initParam.renderHook = renderHook;
+
+	
 	core->init(&initParam, sizeof(initParam));
+
+
+	
+	
+	for(int i=0; i<CORE_CHN_MAX; i++){
+		userEncParamTab0[i][0] = defaultEncParamTab0[i*3+0];
+		userEncParamTab0[i][1] = defaultEncParamTab0[i*3+1];
+		userEncParamTab0[i][2] = defaultEncParamTab0[i*3+2];
+		userEncParamTab1[i][0] = defaultEncParamTab1[i*3+0];
+		userEncParamTab1[i][1] = defaultEncParamTab1[i*3+1];
+		userEncParamTab1[i][2] = defaultEncParamTab1[i*3+2];
+	}
+	
+	
+	
+	ENC2RTP_InitPrm enctranInit;
+	memset(&enctranInit, 0, sizeof(enctranInit));
+	enctranInit.iTransLevel = 1;
+	enctranInit.nChannels = SYS_CHN_CNT;
+	
+	for(int chId=0; chId<enctranInit.nChannels; chId++){
+		CORE1001_CHN_INIT_PARAM *chInf = &initParam.chnInfo[chId];
+		int* params = getEncParamTab(chId, 1);
+		enctranInit.defaultEnable[chId] = true;
+		channelsImgSize[chId].width = 1920;
+		channelsImgSize[chId].height = 1080;
+		enctranInit.imgSize[chId] = channelsImgSize[chId];
+		enctranInit.inputFPS[chId] = chInf->fps;
+		enctranInit.encPrm[chId].fps = chInf->fps;
+		enctranInit.encPrm[chId].bitrate = params[0];
+		enctranInit.encPrm[chId].minQP = params[1];
+		enctranInit.encPrm[chId].maxQP = params[2];
+		enctranInit.encPrm[chId].minQI = params[3];
+		enctranInit.encPrm[chId].maxQI = params[4];
+		enctranInit.encPrm[chId].minQB = params[5];
+		enctranInit.encPrm[chId].maxQB = params[6];
+		enctranInit.srcType[chId] = APPSRC;
+	}
+	initParam.encStreamIpaddr = strIpAddr;
+	if(initParam.encStreamIpaddr != NULL){
+		enctranInit.bRtp = true;
+		strcpy(enctranInit.destIpaddr, initParam.encStreamIpaddr);
+	}
+
+	enctran = new CEnc2Rtp;
+	OSA_assert(enctran != NULL);
+	enctran->init(&enctranInit);
+
 
 	MultiChVideo MultiCh;
 	MultiCh.m_user = NULL;
